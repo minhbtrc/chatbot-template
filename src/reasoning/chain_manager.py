@@ -12,7 +12,7 @@ from langchain.chains import LLMChain
 from langchain.schema import BaseMemory
 
 from src.llms.base import BaseLLMClient
-from infrastructure.logging import logger
+from src.common.logging import logger
 
 
 class Message(TypedDict):

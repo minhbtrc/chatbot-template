@@ -7,7 +7,7 @@ from typing import Dict, List
 from src.memory.base_memory import BaseChatbotMemory
 
 
-class CustomMemory(BaseChatbotMemory):
+class InMemory(BaseChatbotMemory):
     """
     Simple in-memory implementation of the chat history.
     

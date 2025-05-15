@@ -10,6 +10,7 @@ from typing import Dict, Any, Callable, TypeVar
 T = TypeVar('T')
 R = TypeVar('R')
 
+
 class BaseTool(ABC):
     """
     Base abstract class for all tools.

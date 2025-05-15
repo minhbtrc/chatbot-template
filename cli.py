@@ -15,11 +15,11 @@ import argparse
 import sys
 from typing import Optional
 
-from src.bot.bot import Bot
+from src.bot import Bot
 from src.reasoning.brains.brain_factory import create_brain
-from src.memory.custom_memory import CustomMemory
-from infrastructure.config import Config
-from infrastructure.logging import logger
+from src.memory.clients.in_memory import InMemory
+from src.common.config import Config
+from src.common.logging import logger
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -83,7 +83,7 @@ def main():
     brain = create_brain(config)
     
     # Create in-memory storage for chat history
-    memory = CustomMemory()
+    memory = InMemory()
     
     # Create the bot with the brain and memory
     bot = Bot(brain=brain, memory=memory)

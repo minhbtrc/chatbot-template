@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, List
 import logging
 
 from src.reasoning.brains.base import BaseBrain
-from infrastructure.config import Config
+from src.common.config import Config
 
 logger = logging.getLogger(__name__)
 

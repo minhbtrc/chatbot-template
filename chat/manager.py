@@ -7,8 +7,8 @@ import asyncio
 
 from src.bot.bot import Bot
 from src.reasoning.brains.brain_factory import create_brain
-from src.memory.mongodb_memory import MongoMemory
-from infrastructure.config import Config
+from src.memory.clients.mongodb_memory import MongoMemory
+from src.common.config import Config
 
 
 class ChatManager:

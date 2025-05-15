@@ -11,7 +11,6 @@ __version__ = "2.0.0"
 
 # Expose key components for easier imports
 from config import settings
-from chat.manager import ChatManager
 from api import create_app
 
-__all__ = ["settings", "ChatManager", "create_app"]
+__all__ = ["settings", "create_app"]

@@ -49,7 +49,7 @@ class Bot:
         Returns:
             Response dictionary
         """
-        # Get conversation history from memory if available
+        # Get conversation history from src.memory if available
         context: Dict[str, Any] = {}
         if self.memory and conversation_id:
             history = self.memory.get_history(conversation_id)

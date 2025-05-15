@@ -1,75 +1,110 @@
 # Folder Structure
 
-This document explains the folder structure of the application.
+This document describes the folder structure of the LLM Backend Framework.
 
-## Current Structure
+## Overview
 
-The application is organized as follows:
+The project is organized into several key directories:
 
 ```
 ├── api/                  # API layer with FastAPI
-│   └── v1/               # Versioned APIs
+│   ├── v1/               # Versioned APIs
+│   ├── middleware/       # API middleware components
+│   ├── app.py            # API application configuration
+│   ├── models.py         # API data models
+│   └── routes.py         # API route definitions
 ├── src/                  # Source code
-│   ├── bot/              # Bot implementation
+│   ├── bot.py            # Bot implementation
 │   ├── reasoning/        # Reasoning components
 │   │   ├── brains/       # LLM-powered reasoning
-│   │   └── chains/       # Chain implementations
+│   │   │   ├── services/ # Brain service implementations
+│   │   └── chain_manager.py # Chain manager implementation
 │   ├── memory/           # Conversation memory modules
-│   ├── llm_clients/      # LLM service wrappers
-│   ├── common/           # Shared models
-│   │   └── models.py     # Data models
-│   ├── tools/            # Tools for agent capabilities
-│   └── prompts/          # Prompt templates
+│   ├── llms/             # LLM abstraction layer
+│   │   ├── base.py       # Base LLM client interface
+│   │   └── clients/      # LLM-specific client implementations
+│   ├── common/           # Shared utilities and models
+│   │   ├── objects.py    # Shared data models
+│   │   └── config.py     # Configuration management
+│   └── tools/            # Tools for agent capabilities
 ├── infrastructure/       # Infrastructure concerns
 │   ├── db/               # Database clients
-│   ├── di/               # Dependency injection
-│   ├── base.py           # Base classes
-│   ├── config.py         # App configuration
-│   ├── constants.py      # App-wide constants
-│   └── logging.py        # Logging utilities
+│   └── di/               # Dependency injection
 ├── tests/                # Test directory
 ├── docs/                 # Documentation
+├── app.py                # FastAPI application
 ├── cli.py                # Command-line interface
-└── app.py                # FastAPI application
+└── requirements.txt      # Project dependencies
 ```
 
-## Module Responsibilities
+## Key Files
 
 ### API Layer
 
-The API layer handles HTTP requests and responses using FastAPI. It provides endpoints for chat, health checks, and other functionality.
+- `api/v1/chat.py` - Chat endpoints
+- `api/v1/health.py` - Health check endpoints
+- `api/v1/__init__.py` - API initialization
+- `api/app.py` - API application configuration
+- `app.py` - FastAPI main application
 
-### Source Code
+### Bot Implementation
 
-The `src` directory contains the core application logic:
+- `src/bot.py` - Main Bot class
 
-- **bot**: The Bot class that coordinates between reasoning, tools, and memory
-- **reasoning**: Components for generating responses using LLMs
-- **memory**: Storage implementations for conversation history
-- **llm_clients**: Wrappers for different LLM providers
-- **common**: Shared models used throughout the application
-- **tools**: Implementations of tools for enhanced capabilities
-- **prompts**: Templates for prompts used with LLMs
+### Reasoning Components
+
+- `src/reasoning/brains/base.py` - `BaseBrain` abstract class
+- `src/reasoning/brains/brain_factory.py` - Factory to create brains
+- `src/reasoning/brains/services/openai_brain.py` - OpenAI brain implementation
+- `src/reasoning/brains/services/llama_brain.py` - LlamaCpp brain implementation
+- `src/reasoning/brains/services/azure_openai_brain.py` - Azure OpenAI brain implementation
+- `src/reasoning/chain_manager.py` - Chain manager for reasoning flows
+
+### Memory Modules
+
+- `src/memory/base_memory.py` - `BaseChatbotMemory` abstract class
+- `src/memory/custom_memory.py` - In-memory implementation
+- `src/memory/mongodb_memory.py` - MongoDB implementation
+
+### LLM Clients
+
+- `src/llms/base.py` - `BaseLLMClient` abstract class
+- `src/llms/clients/openai_client.py` - OpenAI client
+- `src/llms/clients/llamacpp_client.py` - LlamaCpp client
+- `src/llms/clients/azure_openai_client.py` - Azure OpenAI client
+- `src/llms/clients/vertex_client.py` - Google Vertex AI client
+
+### Tools
+
+- `src/tools/base.py` - `BaseTool` abstract class
+- `src/tools/serp.py` - Search tool implementation
+
+### Common Utilities
+
+- `src/common/objects.py` - Shared data models
+- `src/common/config.py` - Configuration management
 
 ### Infrastructure
 
-The `infrastructure` directory handles application-wide concerns:
+- `infrastructure/db/mongodb.py` - MongoDB client
+- `infrastructure/di/container.py` - Dependency injection container
 
-- **db**: Database clients for storage
-- **di**: Dependency injection
-- **base.py**: Base classes used throughout the application
-- **config.py**: Configuration management
-- **constants.py**: Application-wide constants
-- **logging.py**: Centralized logging
+### Testing
 
-### CLI
-
-The `cli.py` file provides a command-line interface for testing the chatbot without running the API server.
-
-### Tests
-
-The `tests` directory contains unit and integration tests for the application.
+- `tests/conftest.py` - Pytest fixtures
+- `tests/bot/test_bot.py` - Bot tests
+- `tests/reasoning/test_chain_manager.py` - Chain manager tests
+- `tests/reasoning/brains/test_brain_factory.py` - Brain factory tests
+- `tests/memory/test_memory.py` - Memory tests
 
 ### Documentation
 
-The `docs` directory contains detailed documentation for the application.
+- `docs/architecture.md` - Architecture guide
+- `docs/extending.md` - Extension guide
+- `docs/api.md` - API documentation
+- `docs/folder_structure.md` - This document
+- `docs/improvement_suggestions.md` - Suggestions for future enhancements
+
+### Configuration
+
+- `requirements.txt` - Project dependencies

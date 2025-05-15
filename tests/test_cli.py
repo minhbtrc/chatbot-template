@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 
 import cli
 from src.bot.bot import Bot
-from infrastructure.logging import logger
+from src.common.logging import logger
 
 
 class TestCLI(unittest.TestCase):
@@ -56,7 +56,7 @@ class TestCLI(unittest.TestCase):
         with patch('cli.create_parser') as mock_parser, \
              patch('cli.Config') as mock_config, \
              patch('cli.create_brain') as mock_brain, \
-             patch('cli.CustomMemory') as mock_memory, \
+             patch('cli.InMemory') as mock_memory, \
              patch('cli.Bot') as mock_bot, \
              patch('cli.print_welcome_message') as mock_welcome, \
              patch('builtins.input', side_effect=Exception("Test error")), \

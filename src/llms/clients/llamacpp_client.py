@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 
 from langchain_community.llms import LlamaCpp
 
-from infrastructure.config import Config
+from src.common.config import Config
 
 
 class LlamaCppClient:

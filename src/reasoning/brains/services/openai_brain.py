@@ -1,36 +1,36 @@
 """
-Azure OpenAI brain implementation module.
+OpenAI brain implementation module.
 
-This module provides a brain implementation that uses Azure OpenAI models.
+This module provides a brain implementation that uses OpenAI models.
 """
 
 from typing import Dict, Any, Optional, List
 import logging
 
-from src.llms.clients.azure_openai_client import AzureOpenAIClient
+from src.llms.clients.openai_client import OpenAIClient
 from src.reasoning.brains.base import BaseBrain
 from src.reasoning.chain_manager import ChainManager
-from infrastructure.config import Config
+from src.common.config import Config
 
 logger = logging.getLogger(__name__)
 
 
-class AzureOpenAIBrain(BaseBrain):
-    """Brain implementation using Azure OpenAI models."""
+class OpenAIBrain(BaseBrain):
+    """Brain implementation using OpenAI models."""
     
     def __init__(
         self,
         config: Config,
-        llm_client: AzureOpenAIClient,
+        llm_client: OpenAIClient,
         model_kwargs: Optional[Dict[str, Any]] = None,
         chain_manager: Optional[ChainManager] = None,
     ):
         """
-        Initialize the Azure OpenAI brain.
+        Initialize the OpenAI brain.
         
         Args:
             config: Application configuration
-            llm_client: Azure OpenAI client instance
+            llm_client: OpenAI client instance
             model_kwargs: Optional model parameters
             chain_manager: Optional chain manager for structured reasoning
         """
@@ -42,19 +42,19 @@ class AzureOpenAIBrain(BaseBrain):
         
         # Create a standard chat chain if chain manager is provided
         if self.chain_manager:
-            self.chat_chain_id = "azure_openai_chat"
+            self.chat_chain_id = "openai_chat"
             self.chain_manager.create_chat_chain(self.chat_chain_id)
         
     def think(self, query: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
-        Process the query using Azure OpenAI and return a response.
+        Process the query using OpenAI and return a response.
         
         Args:
             query: The user's input query
             context: Optional context containing conversation history, etc.
             
         Returns:
-            Response from the Azure OpenAI model
+            Response from the OpenAI model
         """
         # If no context is provided, initialize it
         context = context or {}
@@ -77,10 +77,10 @@ class AzureOpenAIBrain(BaseBrain):
         messages: List[Dict[str, Any]] = []
         
         # Add system message if configuration has one
-        if hasattr(self.config, "system_message") and self.config.system_message:
+        if hasattr(self.config, "system_message") and self.config.env_vars.system_message:
             messages.append({
                 "role": "system",
-                "content": self.config.system_message
+                "content": self.config.env_vars.system_message
             })
         
         # Add conversation history
@@ -93,16 +93,16 @@ class AzureOpenAIBrain(BaseBrain):
         })
         
         # Log the messages being sent
-        logger.debug(f"Sending messages to Azure OpenAI: {messages}")
+        logger.debug(f"Sending messages to OpenAI: {messages}")
         
-        # Call the Azure OpenAI client
+        # Call the OpenAI client
         response = self.llm_client.chat(messages, **self.model_kwargs)
         
         return response
     
     def reset(self) -> None:
         """Reset the brain state."""
-        # For Azure OpenAI, there's no local state to reset
+        # For OpenAI, there's no local state to reset
         pass
     
     def use_tools(self, tools: List[Any]) -> None:

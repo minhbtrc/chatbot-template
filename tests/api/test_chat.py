@@ -5,7 +5,7 @@ Tests for the chat API endpoints.
 import pytest
 from fastapi.testclient import TestClient
 
-from src.common.objects import ChatRequest
+from api.models import ChatRequest
 
 
 def test_chat_endpoint(test_client, monkeypatch):

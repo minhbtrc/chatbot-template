@@ -7,7 +7,7 @@ import datetime
 
 from src.memory.base_memory import BaseChatbotMemory
 from infrastructure.db.mongodb import MongoDBClient
-from infrastructure.config import Config
+from src.common.config import Config
 
 
 class MongoMemory(BaseChatbotMemory):

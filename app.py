@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from api import create_app
-from infrastructure.config import Config
+from src.common.config import Config
 
 # Load environment variables
 load_dotenv()

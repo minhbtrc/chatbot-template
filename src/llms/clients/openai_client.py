@@ -4,13 +4,13 @@ OpenAI client module.
 This module provides a client for interacting with OpenAI models.
 """
 
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List
 
 from langchain_openai import ChatOpenAI
 from openai import OpenAI
 
 from src.llms.base import BaseLLMClient
-from infrastructure.config import Config
+from src.common.config import Config
 
 
 class OpenAIClient(BaseLLMClient):
@@ -24,8 +24,8 @@ class OpenAIClient(BaseLLMClient):
             config: Application configuration
         """
         self.config = config
-        self.client = OpenAI(api_key=config.openai_api_key)
-        self.model_name = config.base_model_name or "gpt-3.5-turbo"
+        self.client = OpenAI(api_key=config.env_vars.openai_api_key)
+        self.model_name = config.env_vars.base_model_name or "gpt-3.5-turbo"
         self.temperature = 0.7
     
     def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
@@ -81,37 +81,6 @@ class OpenAIClient(BaseLLMClient):
         # For OpenAI, we'll use the chat completions API with a user message
         messages = [{"role": "user", "content": prompt}]
         return self.chat(messages, **kwargs)
-    
-    def create_embedding(self, text: Union[str, List[str]], **kwargs: Any) -> List[List[float]]:
-        """
-        Create embeddings for the given text(s).
-        
-        Args:
-            text: Text or list of texts to create embeddings for
-            **kwargs: Additional model parameters
-            
-        Returns:
-            List of embedding vectors
-        """
-        # Prepare the input
-        if isinstance(text, str):
-            input_texts = [text]
-        else:
-            input_texts = text
-        
-        # Get model from kwargs or use default
-        model_value = kwargs.get('model', 'text-embedding-ada-002')
-        model = str(model_value) if model_value is not None else 'text-embedding-ada-002'
-        
-        # Call the OpenAI API
-        response = self.client.embeddings.create(
-            model=model,
-            input=input_texts
-        )
-        
-        # Extract embeddings
-        embeddings = [item.embedding for item in response.data]
-        return embeddings
     
     def get_model_info(self) -> Dict[str, Any]:
         """

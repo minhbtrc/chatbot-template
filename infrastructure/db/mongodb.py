@@ -8,8 +8,8 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from pymongo import MongoClient
 
-from infrastructure.config import Config
-from infrastructure.logging import logger
+from src.common.config import Config
+from src.common.logging import logger
 
 
 class MongoDBClient:

@@ -4,7 +4,7 @@ Common data models for the application.
 This module contains Pydantic models used throughout the application.
 """
 
-from typing import Optional, Dict, Any, TypedDict
+from typing import Dict, Any, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -20,18 +20,6 @@ class MessageTurn(BaseModel):
     human_message: Message = Field(description="Message from human")
     ai_message: Message = Field(description="Message from AI")
     conversation_id: str = Field(description="The ID of the conversation for this turn")
-
-
-class ChatRequest(BaseModel):
-    """API request model for chat endpoint."""
-    input: str = Field(description="User input message")
-    conversation_id: Optional[str] = Field(description="Unique identifier for the conversation")
-
-
-class ChatResponse(BaseModel):
-    """API response model for chat endpoint."""
-    response: str = Field(description="AI response message")
-    conversation_id: str = Field(description="Unique identifier for the conversation")
 
 
 class Tool(BaseModel):

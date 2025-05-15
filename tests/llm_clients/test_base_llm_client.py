@@ -3,7 +3,7 @@ Tests for the base LLM client implementation.
 """
 
 import unittest
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List
 
 from src.llms.base import BaseLLMClient
 
@@ -15,7 +15,6 @@ class MockLLMClient(BaseLLMClient):
         """Initialize the mock client."""
         self.chat_called = False
         self.complete_called = False
-        self.embedding_called = False
         self.model_info_called = False
         self.close_called = False
         
@@ -32,14 +31,6 @@ class MockLLMClient(BaseLLMClient):
         self.complete_prompt = prompt
         self.complete_kwargs = kwargs
         return "This is a mock completion"
-        
-    def create_embedding(self, text: Union[str, List[str]], **kwargs: Any) -> List[List[float]]:
-        """Mock implementation of create_embedding method."""
-        self.embedding_called = True
-        self.embedding_text = text
-        self.embedding_kwargs = kwargs
-        # Return a simple mock embedding
-        return [[0.1, 0.2, 0.3]]
         
     def get_model_info(self) -> Dict[str, Any]:
         """Mock implementation of get_model_info method."""
@@ -79,16 +70,6 @@ class TestBaseLLMClient(unittest.TestCase):
         self.assertEqual(self.client.complete_prompt, prompt)
         self.assertEqual(self.client.complete_kwargs, {"max_tokens": 100})
         self.assertEqual(response, "This is a mock completion")
-        
-    def test_create_embedding(self):
-        """Test the create_embedding method."""
-        text = "Embed this text"
-        embeddings = self.client.create_embedding(text)
-        
-        self.assertTrue(self.client.embedding_called)
-        self.assertEqual(self.client.embedding_text, text)
-        self.assertEqual(len(embeddings), 1)
-        self.assertEqual(len(embeddings[0]), 3)
         
     def test_get_model_info(self):
         """Test the get_model_info method."""

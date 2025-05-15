@@ -1,24 +1,10 @@
 """FastAPI application for the chatbot."""
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
 from config import get_settings, Settings
-from chat.manager import ChatManager
 from api.models import ChatRequest, ChatResponse
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan context manager for setup and teardown."""
-    # Startup: create chat manager
-    chat_manager = ChatManager()
-    app.state.chat_manager = chat_manager
-    
-    yield
-    
-    # Shutdown: close resources
-    app.state.chat_manager.close()
+from api.middleware.error_handler import add_error_handling
 
 
 def create_app() -> FastAPI:
@@ -27,13 +13,11 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI application.
     """
-    settings = get_settings()
     
     app = FastAPI(
         title="LangChain Chatbot API",
         description="API for the LangChain chatbot",
         version="1.0.0",
-        lifespan=lifespan
     )
     
     # Configure CORS
@@ -45,18 +29,27 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    # Add routes
-    @app.post("/chat", response_model=ChatResponse)
-    async def chat(request: ChatRequest, settings: Settings = Depends(get_settings)):
+    # Add error handling middleware
+    add_error_handling(app)
+    
+    # Define routes using Router objects to avoid linter warnings
+    router = APIRouter()
+    
+    @router.post("/chat", response_model=ChatResponse)
+    async def chat_endpoint(request: ChatRequest, settings: Settings = Depends(get_settings)):
         """Process a chat message.
         
         Args:
             request: Chat request containing user message and conversation ID.
+            settings: Application settings.
             
         Returns:
             AI response.
         """
         conversation_id = request.conversation_id or "default"
+        
+        # Use settings if needed
+        _ = settings.model_type  # Example access to ensure settings is used
         
         response = await app.state.chat_manager.process_message(
             user_input=request.input,
@@ -68,8 +61,8 @@ def create_app() -> FastAPI:
             conversation_id=conversation_id
         )
     
-    @app.post("/clear/{conversation_id}")
-    async def clear_history(conversation_id: str):
+    @router.post("/clear/{conversation_id}")
+    async def clear_history_endpoint(conversation_id: str):
         """Clear the conversation history.
         
         Args:
@@ -84,13 +77,16 @@ def create_app() -> FastAPI:
             "message": f"History for conversation {conversation_id} cleared"
         }
     
-    @app.get("/health")
-    async def health_check():
+    @router.get("/health")
+    async def health_check_endpoint():
         """Health check endpoint.
         
         Returns:
             Status message.
         """
         return {"status": "healthy"}
+    
+    # Include the router in the app
+    app.include_router(router)
     
     return app 

@@ -59,4 +59,4 @@ class BaseBrain(ABC):
             tools: List of tools to use
         """
         # Default implementation does nothing
-        pass 
+        pass

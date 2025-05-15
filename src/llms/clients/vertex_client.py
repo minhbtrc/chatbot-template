@@ -9,7 +9,7 @@ import json
 from langchain_google_vertexai import ChatVertexAI
 import vertexai
 
-from infrastructure.config import Config
+from src.common.config import Config
 
 
 class VertexAIClient:

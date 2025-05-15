@@ -7,14 +7,14 @@ This module provides factory functions to create different brain implementations
 from typing import Dict, Any, Optional
 
 from src.reasoning.brains.base import BaseBrain
-from src.reasoning.brains.openai_brain import OpenAIBrain
-from src.reasoning.brains.llama_brain import LlamaBrain
-from src.reasoning.brains.azure_openai_brain import AzureOpenAIBrain
+from src.reasoning.brains.services.openai_brain import OpenAIBrain
+from src.reasoning.brains.services.llama_brain import LlamaBrain
+from src.reasoning.brains.services.azure_openai_brain import AzureOpenAIBrain
 from src.llms.clients.openai_client import OpenAIClient
 from src.llms.clients.azure_openai_client import AzureOpenAIClient
 from src.reasoning.chain_manager import ChainManager
-from infrastructure.config import Config
-from infrastructure.logging import logger
+from src.common.config import Config
+from src.common.logging import logger
 
 
 def create_brain(
@@ -208,4 +208,4 @@ def create_vertex_brain(
         model_kwargs=model_kwargs,
         chain_manager=chain_manager,
         **kwargs
-    ) 
+    )

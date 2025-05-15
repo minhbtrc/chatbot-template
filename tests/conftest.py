@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import create_app
-from infrastructure.config import Config
+from src.common.config import Config
 from infrastructure.di.container import container
 from src.bots.openai_bot import OpenAIBot
 from src.bots.llama_bot import LlamaBot
