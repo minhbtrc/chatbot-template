@@ -4,7 +4,7 @@ Custom in-memory implementation for chat history.
 
 from typing import Dict, List
 
-from src.memory.base_memory import BaseChatbotMemory
+from src.components.memory.base_memory import BaseChatbotMemory
 
 
 class InMemory(BaseChatbotMemory):

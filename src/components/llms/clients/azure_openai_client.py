@@ -14,8 +14,9 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, System
 from openai import APIError as OpenAIAPIError
 from openai import RateLimitError as OpenAIRateLimitError
 from openai import APIConnectionError as OpenAIConnectionError
+from injector import inject
 
-from src.llms.base import BaseLLMClient
+from src.components.llms.base import BaseLLMClient
 from src.common.config import Config
 from src.common.exceptions import APIError, RateLimitError, ConnectionError, LLMClientError
 from src.common.logging import logger
@@ -23,7 +24,7 @@ from src.common.logging import logger
 
 class AzureOpenAIClient(BaseLLMClient):
     """Client for interacting with Azure OpenAI models."""
-    
+    @inject
     def __init__(self, config: Config):
         """
         Initialize the Azure OpenAI client.
@@ -38,15 +39,15 @@ class AzureOpenAIClient(BaseLLMClient):
             self.config = config
             
             # Log configuration for debugging
-            logger.info(f"Azure OpenAI Configuration: endpoint={config.env_vars.azure_chat_model_endpoint}, "
-                        f"deployment={config.env_vars.azure_chat_model_deployment}, api_version={config.env_vars.azure_chat_model_version}")
+            logger.info(f"Azure OpenAI Configuration: endpoint={config.azure_chat_model_endpoint}, "
+                        f"deployment={config.azure_chat_model_deployment}, api_version={config.azure_chat_model_version}")
             
             # Initialize Azure OpenAI client
             self.client = AzureChatOpenAI(
-                azure_deployment=config.env_vars.azure_chat_model_deployment,
-                api_key=SecretStr(config.env_vars.azure_chat_model_key or ""),
-                api_version=config.env_vars.azure_chat_model_version,
-                azure_endpoint=config.env_vars.azure_chat_model_endpoint or "",
+                azure_deployment=config.azure_chat_model_deployment,
+                api_key=SecretStr(config.azure_chat_model_key or ""),
+                api_version=config.azure_chat_model_version,
+                azure_endpoint=config.azure_chat_model_endpoint or "",
                 temperature=getattr(config, "temperature", 0.7),
                 max_retries=getattr(config, "max_retries", 3),
                 timeout=getattr(config, "request_timeout", 60)
@@ -203,9 +204,9 @@ class AzureOpenAIClient(BaseLLMClient):
         """
         return {
             "provider": "Azure OpenAI",
-            "deployment": self.config.env_vars.azure_chat_model_deployment,
+            "deployment": self.config.azure_chat_model_deployment,
             "temperature": self.temperature,
-            "endpoint": self.config.env_vars.azure_chat_model_endpoint,
+            "endpoint": self.config.azure_chat_model_endpoint,
             "max_retries": self.max_retries,
             "request_timeout": self.request_timeout
         }
@@ -224,11 +225,11 @@ class AzureOpenAIClient(BaseLLMClient):
         
         # Set default parameters
         default_params = {
-            "deployment_name": self.config.env_vars.azure_chat_model_deployment,  # LangChain uses deployment_name
+            "deployment_name": self.config.azure_chat_model_deployment,  # LangChain uses deployment_name
             "temperature": self.temperature,
-            "openai_api_key": self.config.env_vars.azure_chat_model_key,
-            "openai_api_version": self.config.env_vars.azure_chat_model_version,
-            "azure_endpoint": self.config.env_vars.azure_chat_model_endpoint,
+            "openai_api_key": self.config.azure_chat_model_key,
+            "openai_api_version": self.config.azure_chat_model_version,
+            "azure_endpoint": self.config.azure_chat_model_endpoint,
             "request_timeout": self.request_timeout
         }
         

@@ -5,34 +5,32 @@ Chat manager module that interfaces with the bot.
 from typing import Optional
 import asyncio
 
-from src.bot.bot import Bot
-from src.reasoning.brains.brain_factory import create_brain
-from src.memory.clients.mongodb_memory import MongoMemory
+from injector import inject
+
+from src.reasoning.brains.base import BaseBrain
+from src.bot import Bot
 from src.common.config import Config
 
 
-class ChatManager:
+class ChatEngine:
     """
-    Chat manager that handles processing messages and managing conversations.
+    Chat engine that handles processing messages and managing conversations.
     This class serves as a bridge between the API and the bot implementation.
     """
-    
-    def __init__(self):
-        """Initialize the chat manager with a bot instance."""
+    @inject
+    def __init__(
+        self,
+        config: Config,
+        brain: BaseBrain,
+        bot: Bot,
+    ):
+        """Initialize the chat engine with a bot instance."""
         # Create the config
-        self.config = Config()
-        
+        self.config = config
         # Create a brain based on the config
-        self.brain = create_brain(self.config)
-        
-        # Create the memory
-        self.memory = MongoMemory(self.config)
-        
+        self.brain = brain        
         # Create bot instance
-        self.bot = Bot(
-            brain=self.brain,
-            memory=self.memory
-        )
+        self.bot = bot
     
     async def process_message(self, user_input: str, conversation_id: Optional[str] = None) -> str:
         """
@@ -71,4 +69,4 @@ class ChatManager:
     def close(self) -> None:
         """Close any resources used by the chat manager."""
         # No resources to close in this implementation
-        pass 
+        pass

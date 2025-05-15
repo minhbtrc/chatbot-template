@@ -5,8 +5,8 @@ MongoDB memory implementation.
 from typing import Dict, List, Optional, Set
 import datetime
 
-from src.memory.base_memory import BaseChatbotMemory
-from infrastructure.db.mongodb import MongoDBClient
+from src.components.memory.base_memory import BaseChatbotMemory
+from src.components.db.mongodb import MongoDBClient
 from src.common.config import Config
 
 

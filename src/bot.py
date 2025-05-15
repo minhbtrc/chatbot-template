@@ -1,11 +1,13 @@
 """
 Bot module that handles message processing using a Brain for reasoning.
 """
+from typing import Dict, Any, Optional
 
-from typing import Dict, Any, Optional, List
+from injector import inject
 
 from src.reasoning.brains.base import BaseBrain
-from src.memory.base_memory import BaseChatbotMemory
+from src.components.memory.base_memory import BaseChatbotMemory
+from src.components.tools import ToolProvider
 
 
 class Bot:
@@ -16,12 +18,12 @@ class Bot:
     reasoning to a Brain implementation. It uses a memory system to store
     conversation history.
     """
-    
+    @inject
     def __init__(
         self,
         brain: BaseBrain,
-        memory: Optional[BaseChatbotMemory] = None,
-        tools: Optional[List[Any]] = None,
+        memory: BaseChatbotMemory,
+        tool_provider: ToolProvider,
     ):
         """
         Initialize the bot.
@@ -29,14 +31,15 @@ class Bot:
         Args:
             brain: Brain implementation for reasoning
             memory: Memory implementation for storing conversation history
-            tools: List of tools for the bot to use
+            tool_provider: Provider for tools the bot can use
         """
         self.brain = brain
         self.memory = memory
+        self.tool_provider = tool_provider
         
-        # Configure the brain with tools if provided
-        if tools:
-            self.brain.use_tools(tools)
+        # Configure the brain with tools from the provider if available
+        tools = tool_provider.get_tools() if tool_provider else []
+        self.brain.use_tools(tools)
     
     def call(self, sentence: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -49,7 +52,7 @@ class Bot:
         Returns:
             Response dictionary
         """
-        # Get conversation history from src.memory if available
+        # Get conversation history from memory if available
         context: Dict[str, Any] = {}
         if self.memory and conversation_id:
             history = self.memory.get_history(conversation_id)
@@ -103,6 +106,13 @@ class Bot:
         if self.memory:
             info["memory"] = {
                 "type": self.memory.__class__.__name__
+            }
+            
+        # Add tools info if available
+        if self.tool_provider:
+            info["tools"] = {
+                "count": len(self.tool_provider.get_tools()),
+                "types": [tool.__class__.__name__ for tool in self.tool_provider.get_tools()]
             }
         
         return info 

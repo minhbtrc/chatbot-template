@@ -51,7 +51,7 @@ class BaseBrain(ABC):
             "type": self.__class__.__name__,
         }
     
-    def use_tools(self, tools: List[Any]) -> None:
+    def use_tools(self, tools: Optional[List[Any]] = None) -> None:
         """
         Configure the brain to use the provided tools.
         

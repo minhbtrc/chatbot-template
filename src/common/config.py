@@ -2,14 +2,31 @@
 Configuration management for the application.
 """
 
+import json
 import os
 from typing import Optional, Any
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from pydantic_settings import SettingsConfigDict
 from pydantic import Field, model_validator, BaseModel
 
 
-class EnvironmentVariable(BaseModel):
+class Config(BaseModel):
+    """Application settings loaded from environment variables."""
+    # Bot Configuration
+    ai_prefix: Optional[str] = Field(default="assistant", description="Prefix for AI messages in the prompt")
+    human_prefix: Optional[str] = Field(default="user", description="Prefix for human messages in the prompt")
+    memory_key: Optional[str] = Field(default="history", description="Key to use for conversation history")
+    
+    # Miscellaneous
+    enable_anonymizer: bool = Field(default=False, description="Enable PII anonymization")
+    serp_api_token: Optional[str] = Field(default=None, description="SERP API token for web search")
+    
+    # Environment settings
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
+
     # Azure OpenAI Configuration
     azure_chat_model_key: Optional[str] = Field(default=None, description="Azure OpenAI API Key")
     azure_chat_model_version: Optional[str] = Field(default=None, description="Azure OpenAI API Version")
@@ -30,39 +47,28 @@ class EnvironmentVariable(BaseModel):
     credentials: Optional[str] = Field(default=None, description="Path to Vertex AI credentials file")
     system_message: Optional[str] = Field(default=None, description="System message to use in chat prompts")
 
+    model_type: str = Field(default="OPENAI", description="The type of model to use (OPENAI, VERTEX, LLAMA, AZUREOPENAI)")
+
+    # Memory Configuration
+    bot_memory_type: Optional[str] = Field(default="inmemory", description="Type of memory to use (inmemory, mongodb)")
+    memory_window_size: int = Field(default=5, description="Number of messages to include in the context window")
+
+    # Server Configuration
+    port: int = Field(default=8080, description="Server port")
+    log_level: str = Field(default="INFO", description="Logging level")
+
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values: Any):
         # If the value is not, get value from environment variable with uppercase key
         for field_name in cls.model_fields:
-            if values.get(field_name) is None:
-                field_value = os.getenv(field_name.upper())
+            field_value = os.getenv(field_name.upper())
+            if values.get(field_name) is None or field_value:
                 values[field_name] = field_value
         return values
 
-
-class Config(BaseModel):
-    """Application settings loaded from environment variables."""
-    
-    # LLM Configuration
-    model_type: str = Field(default="OPENAI", description="The type of model to use (OPENAI, VERTEX, LLAMA, AZUREOPENAI)")
-    # Memory Configuration
-    memory_type: str = Field(default="custom", description="Type of memory to use (custom, mongo)")
-    memory_window_size: int = Field(default=5, description="Number of messages to include in the context window")
-    
-    # Server Configuration
-    port: int = Field(default=8080, description="Server port")
-    log_level: str = Field(default="INFO", description="Logging level")
-    
-    # Bot Configuration
-    ai_prefix: str = Field(default="AI", description="Prefix for AI messages in the prompt")
-    human_prefix: str = Field(default="Human", description="Prefix for human messages in the prompt")
-    memory_key: str = Field(default="history", description="Key to use for conversation history")
-    
-    # Miscellaneous
-    enable_anonymizer: bool = Field(default=False, description="Enable PII anonymization")
-    serp_api_token: Optional[str] = Field(default=None, description="SERP API token for web search")
-    
-    # Environment settings
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
-    env_vars: EnvironmentVariable = EnvironmentVariable()
+    @classmethod
+    def from_json(cls, json_path: str) -> "Config":
+        """Load configuration from a JSON file."""
+        with open(json_path, "r") as f:
+            return cls(**json.load(f))

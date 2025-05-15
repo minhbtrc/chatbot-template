@@ -4,7 +4,7 @@ Error handling middleware for FastAPI.
 This middleware catches framework exceptions and converts them to appropriate HTTP responses.
 """
 
-from typing import Dict, Any, Callable, Union
+from typing import Dict, Any, Callable, Union, Awaitable
 
 from fastapi import Request, FastAPI
 from fastapi.responses import JSONResponse
@@ -17,7 +17,11 @@ from src.common.logging import logger
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     """Middleware for handling custom exceptions."""
     
-    async def dispatch(self, request: Request, call_next: Callable) -> Union[JSONResponse, Any]:
+    async def dispatch(
+        self, 
+        request: Request, 
+        call_next: Callable[[Request], Awaitable[Any]]
+    ) -> Union[JSONResponse, Any]:
         """
         Process a request and handle any framework exceptions.
         

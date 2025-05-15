@@ -8,8 +8,8 @@ from fastapi.testclient import TestClient
 from api import create_app
 from src.common.config import Config
 from infrastructure.di.container import container
-from src.bots.openai_bot import OpenAIBot
-from src.bots.llama_bot import LlamaBot
+from src.reasoning.brains.services.openai_brain import OpenAIBrain
+from src.reasoning.brains.services.llama_brain import LlamaBrain
 
 
 @pytest.fixture
@@ -26,35 +26,43 @@ def test_client():
 
 
 @pytest.fixture
-def mock_openai_bot():
-    """Fixture for mocked OpenAI bot."""
-    # Override the container's openai bot factory
-    with container.openai_bot.override(lambda: OpenAIBot(
+def mock_openai_brain():
+    """Fixture for mocked OpenAI brain."""
+    # Override the container's openai brain factory
+    with container.openai_brain.override(lambda: OpenAIBrain(
+        llm_client=None,
         config=Config(),
-        chain_manager=None,
-        memory=None,
         tools=None,
         model_kwargs={"model_name": "gpt-3.5-turbo-test"}
     )):
         # Patch the model to avoid actual API calls
         container.openai_client.reset_override()
-        yield container.openai_bot()
+        yield container.openai_brain()
 
 
 @pytest.fixture
-def mock_llama_bot():
-    """Fixture for mocked LlamaCpp bot."""
-    # Override the container's llama bot factory
-    with container.llama_bot.override(lambda: LlamaBot(
+def mock_llama_brain():
+    """Fixture for mocked LlamaCpp brain."""
+    # Override the container's llama brain factory
+    with container.llama_brain.override(lambda: LlamaBrain(
+        llm_client=None,
         config=Config(),
-        chain_manager=None,
-        memory=None,
         tools=None,
         model_kwargs={"model_path": "/path/to/mock/model.bin"}
     )):
         # Patch the model to avoid actual model loading
         container.llama_client.reset_override()
-        yield container.llama_bot()
+        yield container.llama_brain()
+
+
+@pytest.fixture
+def mock_bot(mock_openai_brain):
+    """Fixture for mocked Bot."""
+    from src.bot import Bot
+    from src.components.memory.custom_memory import InMemory
+    
+    memory = InMemory()
+    return Bot(brain=mock_openai_brain, memory=memory)
 
 
 @pytest.fixture

@@ -6,16 +6,17 @@ This module provides a client for interacting with OpenAI models.
 
 from typing import Dict, Any, Optional, List
 
+from injector import inject
 from langchain_openai import ChatOpenAI
 from openai import OpenAI
 
-from src.llms.base import BaseLLMClient
+from src.components.llms.base import BaseLLMClient
 from src.common.config import Config
 
 
 class OpenAIClient(BaseLLMClient):
     """Client for interacting with OpenAI models."""
-    
+    @inject
     def __init__(self, config: Config):
         """
         Initialize the OpenAI client.
@@ -24,8 +25,8 @@ class OpenAIClient(BaseLLMClient):
             config: Application configuration
         """
         self.config = config
-        self.client = OpenAI(api_key=config.env_vars.openai_api_key)
-        self.model_name = config.env_vars.base_model_name or "gpt-3.5-turbo"
+        self.client = OpenAI(api_key=config.openai_api_key)
+        self.model_name = config.base_model_name or "gpt-3.5-turbo"
         self.temperature = 0.7
     
     def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:

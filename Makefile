@@ -22,7 +22,7 @@ setup:
 	$(PIP) install -r requirements.txt
 
 dev:
-	uvicorn main:app --reload --host 0.0.0.0 --port $(PORT)
+	uvicorn app:app --reload --host 0.0.0.0 --port $(PORT)
 
 test:
 	$(PYTEST) -v --cov=. tests/

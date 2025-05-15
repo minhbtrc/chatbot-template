@@ -96,9 +96,9 @@ class StorageError(MemoryError):
 
 
 class RetrievalError(MemoryError):
-    """Raised when retrieving data from src.memory fails."""
+    """Raised when retrieving data from src.components.memory fails."""
     
-    def __init__(self, message: str = "Failed to retrieve data from src.memory"):
+    def __init__(self, message: str = "Failed to retrieve data from src.components.memory"):
         self.message = message
         super().__init__(self.message)
 

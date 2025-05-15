@@ -9,19 +9,11 @@ This module contains reasoning components that use different techniques:
 
 from src.reasoning.brains import (
     BaseBrain,
-    OpenAIBrain,
-    LlamaBrain,
-    create_brain,
-    create_openai_brain,
-    create_llama_brain,
+    LLMBrain,
 )
 
 __all__ = [
     # Brains
     "BaseBrain",
-    "OpenAIBrain",
-    "LlamaBrain",
-    "create_brain",
-    "create_openai_brain",
-    "create_llama_brain",
+    "LLMBrain",
 ] 

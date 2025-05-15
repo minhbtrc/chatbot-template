@@ -8,7 +8,7 @@ from typing import Optional, Dict, Any
 
 from langchain.utilities import SerpAPIWrapper
 
-from src.tools.base import BaseTool
+from src.components.tools.base import BaseTool
 
 
 class CustomSearchTool(BaseTool):

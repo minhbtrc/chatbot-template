@@ -19,14 +19,21 @@ The project is organized into several key directories:
 │   │   ├── brains/       # LLM-powered reasoning
 │   │   │   ├── services/ # Brain service implementations
 │   │   └── chain_manager.py # Chain manager implementation
-│   ├── memory/           # Conversation memory modules
-│   ├── llms/             # LLM abstraction layer
-│   │   ├── base.py       # Base LLM client interface
-│   │   └── clients/      # LLM-specific client implementations
-│   ├── common/           # Shared utilities and models
-│   │   ├── objects.py    # Shared data models
-│   │   └── config.py     # Configuration management
-│   └── tools/            # Tools for agent capabilities
+│   ├── components/       # Reusable components
+│   │   ├── llms/         # LLM abstraction layer
+│   │   │   ├── base.py   # Base LLM client interface
+│   │   │   └── clients/  # LLM-specific client implementations
+│   │   ├── memory/       # Conversation memory modules
+│   │   │   ├── base_memory.py # BaseChatbotMemory abstract class
+│   │   │   ├── custom_memory.py # In-memory implementation
+│   │   │   └── mongodb_memory.py # MongoDB implementation
+│   │   └── tools/        # Tools for agent capabilities
+│   │       ├── base.py   # BaseTool abstract class
+│   │       ├── serp.py   # Search tool implementation
+│   │       └── __init__.py # ToolProvider and tools initialization
+│   └── common/           # Shared utilities and models
+│       ├── objects.py    # Shared data models
+│       └── config.py     # Configuration management
 ├── infrastructure/       # Infrastructure concerns
 │   ├── db/               # Database clients
 │   └── di/               # Dependency injection
@@ -62,22 +69,23 @@ The project is organized into several key directories:
 
 ### Memory Modules
 
-- `src/memory/base_memory.py` - `BaseChatbotMemory` abstract class
-- `src/memory/custom_memory.py` - In-memory implementation
-- `src/memory/mongodb_memory.py` - MongoDB implementation
+- `src/components/memory/base_memory.py` - `BaseChatbotMemory` abstract class
+- `src/components/memory/custom_memory.py` - In-memory implementation
+- `src/components/memory/mongodb_memory.py` - MongoDB implementation
 
 ### LLM Clients
 
-- `src/llms/base.py` - `BaseLLMClient` abstract class
-- `src/llms/clients/openai_client.py` - OpenAI client
-- `src/llms/clients/llamacpp_client.py` - LlamaCpp client
-- `src/llms/clients/azure_openai_client.py` - Azure OpenAI client
-- `src/llms/clients/vertex_client.py` - Google Vertex AI client
+- `src/components/llms/base.py` - `BaseLLMClient` abstract class
+- `src/components/llms/clients/openai_client.py` - OpenAI client
+- `src/components/llms/clients/llamacpp_client.py` - LlamaCpp client
+- `src/components/llms/clients/azure_openai_client.py` - Azure OpenAI client
+- `src/components/llms/clients/vertex_client.py` - Google Vertex AI client
 
 ### Tools
 
-- `src/tools/base.py` - `BaseTool` abstract class
-- `src/tools/serp.py` - Search tool implementation
+- `src/components/tools/__init__.py` - `ToolProvider` class for centralized tool management
+- `src/components/tools/base.py` - `BaseTool` abstract class
+- `src/components/tools/serp.py` - Search tool implementation
 
 ### Common Utilities
 

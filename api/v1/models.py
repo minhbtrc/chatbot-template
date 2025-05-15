@@ -15,4 +15,4 @@ class ChatResponse(BaseModel):
     """Chat response model."""
     
     output: str = Field(..., description="AI response")
-    conversation_id: str = Field(..., description="Conversation ID") 
+    conversation_id: str = Field(..., description="Conversation ID")

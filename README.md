@@ -1,10 +1,9 @@
-# LLM Backend Framework
+# LLM Chatbot Backend Framework
 
 A modular backend framework for building AI applications with large language models (LLMs), FastAPI, and MongoDB.
 
 📚 **Developer docs available in the [docs/](./docs/) folder.**
 
-📋 **Check out our [improvement suggestions](./docs/improvement_suggestions.md) for future development.**
 
 ## Project Structure
 
@@ -32,25 +31,26 @@ The project is organized using the Bot-Brain architecture with standardized inte
 │   │   │   │   ├── azure_openai_brain.py # Brain using Azure OpenAI
 │   │   │   └── __init__.py # Brain module initialization
 │   │   └── chain_manager.py # Chain manager for reasoning flows
-│   ├── memory/           # Conversation memory modules
-│   │   ├── __init__.py   # Memory module initialization
-│   │   ├── base_memory.py # BaseChatbotMemory abstract class
-│   │   ├── custom_memory.py # In-memory implementation
-│   │   └── mongodb_memory.py # MongoDB implementation
-│   ├── llms/             # LLM abstraction layer
-│   │   ├── base.py       # BaseLLMClient abstract class
-│   │   └── clients/      # LLM-specific client implementations
-│   │       ├── openai_client.py  # OpenAI API client
-│   │       ├── azure_openai_client.py # Azure OpenAI API client
-│   │       ├── llamacpp_client.py # LlamaCpp client
-│   │       └── vertex_client.py # Google Vertex AI client
-│   ├── common/           # Shared utilities and models
-│   │   ├── objects.py    # Shared data models
-│   │   └── config.py     # Configuration management
-│   └── tools/            # Tools for agent capabilities
-│       ├── base.py       # BaseTool abstract class
-│       ├── serp.py       # Search tool implementation
-│       └── __init__.py   # Tools initialization
+│   ├── components/       # Reusable components
+│   │   ├── llms/         # LLM abstraction layer
+│   │   │   ├── base.py   # BaseLLMClient abstract class
+│   │   │   └── clients/  # LLM-specific client implementations
+│   │   │       ├── openai_client.py  # OpenAI API client
+│   │   │       ├── azure_openai_client.py # Azure OpenAI API client
+│   │   │       ├── llamacpp_client.py # LlamaCpp client
+│   │   │       └── vertex_client.py # Google Vertex AI client
+│   │   ├── memory/       # Conversation memory modules
+│   │   │   ├── __init__.py   # Memory module initialization
+│   │   │   ├── base_memory.py # BaseChatbotMemory abstract class
+│   │   │   ├── custom_memory.py # In-memory implementation
+│   │   │   └── mongodb_memory.py # MongoDB implementation
+│   │   └── tools/        # Tools for agent capabilities
+│   │       ├── base.py   # BaseTool abstract class
+│   │       ├── serp.py   # Search tool implementation
+│   │       └── __init__.py # ToolProvider and tools initialization
+│   └── common/           # Shared utilities and models
+│       ├── objects.py    # Shared data models
+│       └── config.py     # Configuration management
 ├── infrastructure/       # Infrastructure concerns
 │   ├── db/               # Database clients
 │   │   └── mongodb.py    # MongoDB client
@@ -64,11 +64,8 @@ The project is organized using the Bot-Brain architecture with standardized inte
 │   ├── tools/            # Tool tests
 │   └── llms/             # LLM client tests
 ├── docs/                 # Documentation
-│   ├── architecture.md   # Architecture guide
-│   ├── extending.md      # Extension guide
-│   ├── api.md            # API documentation
 │   ├── folder_structure.md # Folder structure guide
-│   └── improvement_suggestions.md # Suggestions for future improvements
+│   └── api.md            # API documentation
 ├── app.py                # FastAPI application
 ├── cli.py                # Command-line interface for local testing
 ├── Dockerfile            # Docker configuration
@@ -95,6 +92,7 @@ The application follows a Bot-Brain architecture with standardized interfaces:
    - Multiple implementations for different providers (OpenAI, Azure OpenAI, etc.)
 
 4. **Tools** - Standardized interface for agent tools
+   - Centrally managed by the `ToolProvider` class
    - Follows `BaseTool` interface
    - Consistent schema handling with OpenAI tool format
    - Supports a variety of capabilities (search, etc.)
@@ -110,18 +108,19 @@ graph TD
     Bot --> BrainFactory
     BrainFactory --> BrainInstance["Brain (via config)"]
     Bot --> Memory
+    Bot --> ToolProvider["Tool Provider"]
     
     %% Reasoning Layer
     BrainInstance -->|calls| LLMClient
-    BrainInstance -->|may use| Tools
+    BrainInstance -->|uses via| ToolProvider
     BrainInstance -->|reads/writes| Memory
     
     %% LLM Layer
     LLMClient -->|calls| ExternalAPI["External LLM API"]
     
     %% Tool Layer
-    Tools --> SearchTool["Search Tool"]
-    Tools --> OtherTools["Other Tools"]
+    ToolProvider -->|manages| SearchTool["Search Tool"]
+    ToolProvider -->|manages| OtherTools["Other Tools"]
     
     %% Memory Layer
     Memory -->|implementations| StorageOptions["MongoDB / In-Memory"]
@@ -202,6 +201,30 @@ class BaseTool(ABC):
         }
 ```
 
+### Tool Provider
+
+The `ToolProvider` class centralizes tool management for the application:
+
+```python
+class ToolProvider:
+    def __init__(self):
+        """Initialize the tool provider with default tools."""
+        self._tools: List[BaseTool] = []
+        
+        # Register default tools here
+        # self.register_tool(CustomSearchTool())
+    
+    def register_tool(self, tool: BaseTool) -> None:
+        """Register a new tool."""
+        self._tools.append(tool)
+    
+    def get_tools(self) -> List[BaseTool]:
+        """Get all registered tools."""
+        return self._tools
+```
+
+This centralized approach allows for easy addition of new tools and ensures they are consistently available to the Bot and Brain components.
+
 ### Brain Implementations
 
 Brain implementations are now under the reasoning/brains/services module:
@@ -231,34 +254,6 @@ The `tests` directory includes comprehensive tests:
 - Mock implementations of `BaseLLMClient` and `BaseTool` for testing
 - Unit tests for tools, LLM clients, and other components
 - API tests for the FastAPI endpoints
-
-## Status and Extensions
-
-The codebase has been refactored to use standardized interfaces:
-
-1. **✅ Standardized LLM Client Interface**:
-   - All LLM clients implement `BaseLLMClient`
-   - Consistent methods for chat, completion
-
-2. **✅ Standardized Tool Interface**:
-   - All tools implement `BaseTool`
-   - Consistent schema definition and execution
-
-3. **✅ Improved Directory Structure**:
-   - Renamed directories for clarity (llms → llm_clients, chains → reasoning)
-   - Better organization with brains under reasoning/brains/services
-   - Consolidated test structure
-
-4. **✅ Enhanced Extensibility**:
-   - New LLM clients can be added by implementing `BaseLLMClient`
-   - New tools can be added by implementing `BaseTool`
-   - Brain implementations can be swapped without changing the Bot
-
-5. **✅ Multiple LLM Providers Support**:
-   - OpenAI API integration
-   - Azure OpenAI API integration
-   - Local LLM support via LlamaCpp
-   - Google Vertex AI integration
 
 ## Getting Started
 
@@ -317,23 +312,3 @@ python cli.py --conversation-id my_session_123
 ```
 
 Exit the CLI by typing 'exit', 'quit', or pressing Ctrl+C.
-
-## Extending the Framework
-
-### Adding a New LLM Client
-
-1. Create a new file in `src/llms/clients/`
-2. Implement the `BaseLLMClient` interface
-3. Register the client in the factory if needed
-
-### Adding a New Tool
-
-1. Create a new file in `src/tools/`
-2. Implement the `BaseTool` interface
-3. Add the tool to the tool registry
-
-### Adding a New Brain
-
-1. Create a new file in `src/reasoning/brains/services/`
-2. Implement the `BaseBrain` interface
-3. Update the brain factory if needed

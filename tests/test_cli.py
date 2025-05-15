@@ -55,7 +55,6 @@ class TestCLI(unittest.TestCase):
         """Test main function exception handling."""
         with patch('cli.create_parser') as mock_parser, \
              patch('cli.Config') as mock_config, \
-             patch('cli.create_brain') as mock_brain, \
              patch('cli.InMemory') as mock_memory, \
              patch('cli.Bot') as mock_bot, \
              patch('cli.print_welcome_message') as mock_welcome, \

@@ -6,6 +6,7 @@ This module provides a client for interacting with LlamaCpp models.
 
 from typing import Dict, Any, Optional
 
+from injector import inject
 from langchain_community.llms import LlamaCpp
 
 from src.common.config import Config
@@ -13,7 +14,7 @@ from src.common.config import Config
 
 class LlamaCppClient:
     """Client for interacting with LlamaCpp models."""
-    
+    @inject
     def __init__(self, config: Config):
         """
         Initialize the LlamaCpp client.

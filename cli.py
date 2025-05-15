@@ -13,13 +13,12 @@ Exit the chat by typing 'exit', 'quit', or pressing Ctrl+C.
 
 import argparse
 import sys
-from typing import Optional
+from typing import Optional, cast
 
 from src.bot import Bot
-from src.reasoning.brains.brain_factory import create_brain
-from src.memory.clients.in_memory import InMemory
 from src.common.config import Config
 from src.common.logging import logger
+from dependency_injector import get_instance, update_injector_with_config
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -77,16 +76,12 @@ def main():
     if args.model:
         config.model_type = args.model.upper()
     
+    update_injector_with_config(config)
+    
     logger.info(f"Starting CLI with model: {config.model_type}")
     
-    # Create the brain based on the config
-    brain = create_brain(config)
-    
-    # Create in-memory storage for chat history
-    memory = InMemory()
-    
     # Create the bot with the brain and memory
-    bot = Bot(brain=brain, memory=memory)
+    bot = cast(Bot, get_instance(Bot))
     
     # Print welcome message
     print_welcome_message()

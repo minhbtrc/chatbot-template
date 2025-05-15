@@ -6,15 +6,17 @@ from typing import Dict, Any, Optional
 import os
 import json
 
+from injector import inject
 from langchain_google_vertexai import ChatVertexAI
 import vertexai
 
+from src.components.llms.base import BaseLLMClient
 from src.common.config import Config
 
 
-class VertexAIClient:
+class VertexAIClient(BaseLLMClient):
     """Wrapper for Vertex AI API integration."""
-    
+    @inject
     def __init__(self, config: Config):
         """
         Initialize the Vertex AI client.
