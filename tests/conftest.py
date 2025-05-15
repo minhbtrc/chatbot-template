@@ -7,9 +7,8 @@ from fastapi.testclient import TestClient
 
 from api import create_app
 from src.common.config import Config
-from infrastructure.di.container import container
-from src.reasoning.brains.services.openai_brain import OpenAIBrain
-from src.reasoning.brains.services.llama_brain import LlamaBrain
+from dependency_injector import get_instance, update_injector_with_config
+from src.reasoning.brains.services.llm_brain import LLMBrain
 
 
 @pytest.fixture
@@ -26,43 +25,26 @@ def test_client():
 
 
 @pytest.fixture
-def mock_openai_brain():
-    """Fixture for mocked OpenAI brain."""
-    # Override the container's openai brain factory
-    with container.openai_brain.override(lambda: OpenAIBrain(
+def mock_brain(monkeypatch):
+    """Fixture for mocked Brain."""
+    # Create a mock brain
+    return LLMBrain(
         llm_client=None,
         config=Config(),
-        tools=None,
-        model_kwargs={"model_name": "gpt-3.5-turbo-test"}
-    )):
-        # Patch the model to avoid actual API calls
-        container.openai_client.reset_override()
-        yield container.openai_brain()
+        tools=None
+    )
 
 
 @pytest.fixture
-def mock_llama_brain():
-    """Fixture for mocked LlamaCpp brain."""
-    # Override the container's llama brain factory
-    with container.llama_brain.override(lambda: LlamaBrain(
-        llm_client=None,
-        config=Config(),
-        tools=None,
-        model_kwargs={"model_path": "/path/to/mock/model.bin"}
-    )):
-        # Patch the model to avoid actual model loading
-        container.llama_client.reset_override()
-        yield container.llama_brain()
-
-
-@pytest.fixture
-def mock_bot(mock_openai_brain):
+def mock_bot(mock_brain):
     """Fixture for mocked Bot."""
     from src.bot import Bot
     from src.components.memory.custom_memory import InMemory
+    from src.components.tools import ToolProvider
     
     memory = InMemory()
-    return Bot(brain=mock_openai_brain, memory=memory)
+    tool_provider = ToolProvider()
+    return Bot(brain=mock_brain, memory=memory, tool_provider=tool_provider)
 
 
 @pytest.fixture

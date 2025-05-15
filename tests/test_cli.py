@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 import cli
-from src.bot.bot import Bot
+from src.bot import Bot
 from src.common.logging import logger
 
 
@@ -55,8 +55,8 @@ class TestCLI(unittest.TestCase):
         """Test main function exception handling."""
         with patch('cli.create_parser') as mock_parser, \
              patch('cli.Config') as mock_config, \
-             patch('cli.InMemory') as mock_memory, \
-             patch('cli.Bot') as mock_bot, \
+             patch('cli.update_injector_with_config') as mock_update_injector, \
+             patch('cli.get_instance') as mock_get_instance, \
              patch('cli.print_welcome_message') as mock_welcome, \
              patch('builtins.input', side_effect=Exception("Test error")), \
              patch('sys.exit') as mock_exit, \
@@ -72,14 +72,8 @@ class TestCLI(unittest.TestCase):
             config_instance = MagicMock()
             mock_config.return_value = config_instance
             
-            brain_instance = MagicMock()
-            mock_brain.return_value = brain_instance
-            
-            memory_instance = MagicMock()
-            mock_memory.return_value = memory_instance
-            
             bot_instance = MagicMock()
-            mock_bot.return_value = bot_instance
+            mock_get_instance.return_value = bot_instance
             
             # Run the main function
             cli.main()
@@ -87,9 +81,8 @@ class TestCLI(unittest.TestCase):
             # Verify mocks were called
             mock_parser.assert_called_once()
             mock_config.assert_called_once()
-            mock_brain.assert_called_once()
-            mock_memory.assert_called_once()
-            mock_bot.assert_called_once()
+            mock_update_injector.assert_called_once()
+            mock_get_instance.assert_called_once()
             mock_welcome.assert_called_once()
             
             # Check that the error was handled properly
