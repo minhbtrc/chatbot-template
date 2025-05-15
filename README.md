@@ -109,36 +109,26 @@ graph TD
     %% Bot Layer
     Bot --> BrainFactory
     BrainFactory --> BrainInstance["Brain (via config)"]
-    Bot --> MemoryModule["Memory (Conversation State)"]
+    Bot --> Memory
     
     %% Reasoning Layer
     BrainInstance -->|calls| LLMClient
-    BrainInstance -->|may use| ToolRegistry["Tools"]
-    BrainInstance -->|reads/writes| MemoryModule
+    BrainInstance -->|may use| Tools
+    BrainInstance -->|reads/writes| Memory
     
     %% LLM Layer
-    LLMClient -->|calls| ExternalLLMAPI["External LLM API<br/>(OpenAI, Azure, LlamaCpp, Vertex)"]
+    LLMClient -->|calls| ExternalAPI["External LLM API"]
     
     %% Tool Layer
-    ToolRegistry --> SerpTool["Search Tool"]
-    ToolRegistry --> OtherTool["..."]
+    Tools --> SearchTool["Search Tool"]
+    Tools --> OtherTools["Other Tools"]
     
     %% Memory Layer
-    MemoryModule -->|impl| MongoDBMemory["MongoDBMemory"]
-    MemoryModule -->|impl| InMemoryMemory["InMemoryMemory"]
+    Memory -->|implementations| StorageOptions["MongoDB / In-Memory"]
     
-    %% Admin
-    subgraph Configuration
-        ConfigFile["config.py"]
-        ENV["Environment Variables"]
-        ConfigFile --> BrainFactory
-        ConfigFile --> LLMClient
-    end
-    
-    %% Registry / DI Layer
-    DI["Dependency Injection"] --> Bot
-    DI --> LLMClient
-    DI --> BrainFactory
+    %% Configuration
+    Config["Configuration"] --> BrainFactory
+    Config --> LLMClient
 ```
 
 ### Brain Composition Detail
