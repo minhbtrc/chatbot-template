@@ -102,13 +102,56 @@ The application follows a Bot-Brain architecture with standardized interfaces:
 ## Bot-Brain Architecture Diagram
 
 ```mermaid
-graph LR
-    User --> Bot
-    Bot --> Brain[Brain]
-    Brain -->|calls| LLMClient[LLM Client]
-    Brain -->|may use| Tools
-    Brain -->|may use| Memory
-    LLMClient -->|connects to| ExternalLLM[External LLM API]
+graph TD
+    %% Entry
+    UserInput["User Input"] --> Bot[Bot]
+    
+    %% Bot Layer
+    Bot --> BrainFactory[Brain Factory]
+    BrainFactory --> BrainInstance[Brain (via config)]
+    Bot --> MemoryModule[Memory (Conversation State)]
+    
+    %% Reasoning Layer
+    BrainInstance -->|calls| LLMClient
+    BrainInstance -->|may use| ToolRegistry[Tools]
+    BrainInstance -->|reads/writes| MemoryModule
+    
+    %% LLM Layer
+    LLMClient -->|calls| ExternalLLMAPI[External LLM API<br/>(OpenAI, Azure, LlamaCpp, Vertex)]
+    
+    %% Tool Layer
+    ToolRegistry --> SerpTool[Search Tool]
+    ToolRegistry --> OtherTool[...]
+    
+    %% Memory Layer
+    MemoryModule -->|impl| MongoDBMemory[MongoDBMemory]
+    MemoryModule -->|impl| InMemoryMemory[InMemoryMemory]
+    
+    %% Admin
+    subgraph Configuration
+        ConfigFile[config.py]
+        ENV["Environment Variables"]
+        ConfigFile --> BrainFactory
+        ConfigFile --> LLMClient
+    end
+    
+    %% Registry / DI Layer
+    DI["Dependency Injection"] --> Bot
+    DI --> LLMClient
+    DI --> BrainFactory
+```
+
+### Brain Composition Detail
+
+```mermaid
+graph TD
+    subgraph Brain
+        Brain --> ChainManager
+        Brain --> BrainTools
+        Brain --> BrainMemory
+        ChainManager --> LLMClient
+        ChainManager --> ToolCalls
+    end
 ```
 
 ## Implementation Notes
