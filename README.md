@@ -104,32 +104,32 @@ The application follows a Bot-Brain architecture with standardized interfaces:
 ```mermaid
 graph TD
     %% Entry
-    UserInput["User Input"] --> Bot[Bot]
-    
+    UserInput["User Input"] --> Bot
+
     %% Bot Layer
-    Bot --> BrainFactory[Brain Factory]
-    BrainFactory --> BrainInstance[Brain (via config)]
-    Bot --> MemoryModule[Memory (Conversation State)]
+    Bot --> BrainFactory
+    BrainFactory --> BrainInstance["Brain (via config)"]
+    Bot --> MemoryModule["Memory (Conversation State)"]
     
     %% Reasoning Layer
     BrainInstance -->|calls| LLMClient
-    BrainInstance -->|may use| ToolRegistry[Tools]
+    BrainInstance -->|may use| ToolRegistry["Tools"]
     BrainInstance -->|reads/writes| MemoryModule
     
     %% LLM Layer
-    LLMClient -->|calls| ExternalLLMAPI[External LLM API<br/>(OpenAI, Azure, LlamaCpp, Vertex)]
+    LLMClient -->|calls| ExternalLLMAPI["External LLM API<br/>(OpenAI, Azure, LlamaCpp, Vertex)"]
     
     %% Tool Layer
-    ToolRegistry --> SerpTool[Search Tool]
-    ToolRegistry --> OtherTool[...]
+    ToolRegistry --> SerpTool["Search Tool"]
+    ToolRegistry --> OtherTool["..."]
     
     %% Memory Layer
-    MemoryModule -->|impl| MongoDBMemory[MongoDBMemory]
-    MemoryModule -->|impl| InMemoryMemory[InMemoryMemory]
+    MemoryModule -->|impl| MongoDBMemory["MongoDBMemory"]
+    MemoryModule -->|impl| InMemoryMemory["InMemoryMemory"]
     
     %% Admin
     subgraph Configuration
-        ConfigFile[config.py]
+        ConfigFile["config.py"]
         ENV["Environment Variables"]
         ConfigFile --> BrainFactory
         ConfigFile --> LLMClient
@@ -146,11 +146,11 @@ graph TD
 ```mermaid
 graph TD
     subgraph Brain
-        Brain --> ChainManager
-        Brain --> BrainTools
-        Brain --> BrainMemory
-        ChainManager --> LLMClient
-        ChainManager --> ToolCalls
+        BrainNode["Brain"] --> ChainManager
+        BrainNode --> BrainTools["Brain Tools"]
+        BrainNode --> BrainMemory["Brain Memory"]
+        ChainManager --> LLMClientNode["LLM Client"]
+        ChainManager --> ToolCalls["Tool Calls"]
     end
 ```
 
