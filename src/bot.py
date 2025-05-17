@@ -36,10 +36,6 @@ class Bot:
         self.brain = brain
         self.memory = memory
         self.tool_provider = tool_provider
-        
-        # Configure the brain with tools from the provider if available
-        tools = tool_provider.get_tools() if tool_provider else []
-        self.brain.use_tools(tools)
     
     def call(self, sentence: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
         """

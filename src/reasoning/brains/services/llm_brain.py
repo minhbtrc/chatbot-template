@@ -97,8 +97,8 @@ class LLMBrain(BaseBrain):
         Args:
             tools: List of tools to use
         """
-        if tools is not None:
-            self.tools = tools
+        logger.warning("LLM Agent doesn't use tools, use other kind of brain for that")
+        pass
         
     def get_info(self) -> Dict[str, Any]:
         """Get information about the brain."""

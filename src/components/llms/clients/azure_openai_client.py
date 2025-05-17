@@ -55,6 +55,16 @@ class AzureOpenAIClient(BaseLLMClient):
             self.temperature = getattr(config, "temperature", 0.7)
             self.max_retries = getattr(config, "max_retries", 3)
             self.request_timeout = getattr(config, "request_timeout", 60)
+
+            self.callbacks: List[Any] = []
+            if config.llm_tracing_enable:
+                from langfuse.callback import CallbackHandler
+                langfuse_handler = CallbackHandler(
+                    secret_key=config.langfuse_secret_key,
+                    public_key=config.langfuse_public_key,
+                    host=config.langfuse_host
+                )
+                self.callbacks = [langfuse_handler]
             
         except Exception as e:
             logger.error(f"Failed to initialize Azure OpenAI client: {str(e)}")
@@ -101,7 +111,8 @@ class AzureOpenAIClient(BaseLLMClient):
             # Call the Azure OpenAI API
             # For Azure OpenAI, the deployment name is passed as the model parameter
             response = self.client.invoke(
-                input=formatted_messages
+                input=formatted_messages,
+                config={"callbacks": self.callbacks}
             )
             
             # Return the content of the first choice

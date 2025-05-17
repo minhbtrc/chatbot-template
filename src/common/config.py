@@ -57,6 +57,11 @@ class Config(BaseModel):
     port: int = Field(default=8080, description="Server port")
     log_level: str = Field(default="INFO", description="Logging level")
 
+    llm_tracing_enable: Optional[bool] = Field(default=True, description="Enable trading with LLM")
+    langfuse_secret_key: Optional[str] = Field(default=None, description="")
+    langfuse_public_key: Optional[str] = Field(default=None, description="")
+    langfuse_host: Optional[str] = Field(default=None, description="")
+
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values: Any):
