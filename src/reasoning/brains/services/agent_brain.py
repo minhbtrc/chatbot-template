@@ -37,7 +37,6 @@ class AgentBrain(BaseBrain):
 
         history.append({"role": "user", "content": query})
         response = self.brain.invoke({"messages": history}).get("messages")
-        print(response)
         last_message = response[-1]
 
         return {
@@ -46,4 +45,4 @@ class AgentBrain(BaseBrain):
         }
 
     def reset(self) -> None:
-        self.brain.reset()
+        self.brain.clear_cache()

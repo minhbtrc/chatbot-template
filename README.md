@@ -1,13 +1,14 @@
 # LLM Chatbot Backend Framework
 
-A modular backend framework for building AI applications with large language models (LLMs), FastAPI, and MongoDB.
+- A modular backend framework for building AI chat applications powered by large language models (LLMs), using FastAPI and MongoDB
+- A flexible template that incorporates the latest techniques and best practices for building production-ready chatbots
 
 📚 **Developer docs available in the [docs/](./docs/) folder.**
 
 
 ## Project Structure
 
-The project is organized using the Bot-Brain architecture with standardized interfaces:
+The project is organized using a layered Bot-Brain architecture with a modular Components Layer:
 
 ```
 ├── api/                  # API layer with FastAPI
@@ -17,55 +18,55 @@ The project is organized using the Bot-Brain architecture with standardized inte
 │   │   └── __init__.py   # API initialization
 │   ├── middleware/       # API middleware components 
 │   ├── app.py            # API application configuration
-│   ├── models.py         # API data models
 │   └── routes.py         # API route definitions
 ├── src/                  # Source code
-│   ├── bot.py            # Main Bot class
+│   ├── bot.py            # Main Bot class (orchestrates components)
+│   ├── chat_engine.py    # Chat engine implementation
 │   ├── reasoning/        # Reasoning components
 │   │   ├── brains/       # LLM-powered reasoning
 │   │   │   ├── base.py   # BaseBrain abstract class
 │   │   │   ├── brain_factory.py # Factory to choose correct brain
 │   │   │   ├── services/ # Brain service implementations
-│   │   │   │   ├── openai_brain.py # Brain using OpenAI LLM
-│   │   │   │   ├── llama_brain.py # Brain using LlamaCpp
-│   │   │   │   ├── azure_openai_brain.py # Brain using Azure OpenAI
+│   │   │   │   ├── agent_brain.py # Agent-based brain implementation
+│   │   │   │   └── llm_brain.py # Base LLM brain implementation
 │   │   │   └── __init__.py # Brain module initialization
-│   │   └── chain_manager.py # Chain manager for reasoning flows
-│   ├── components/       # Reusable components
-│   │   ├── llms/         # LLM abstraction layer
-│   │   │   ├── base.py   # BaseLLMClient abstract class
-│   │   │   └── clients/  # LLM-specific client implementations
+│   ├── components/       # Components Layer: modular, interchangeable units
+│   │   ├── llms/         # LLM client components
+│   │   │   ├── base.py   # BaseLLMClient abstract interface
+│   │   │   ├── llm_factory.py # Factory for LLM clients
+│   │   │   └── clients/  # Implementations for different LLM providers
 │   │   │       ├── openai_client.py  # OpenAI API client
 │   │   │       ├── azure_openai_client.py # Azure OpenAI API client
 │   │   │       ├── llamacpp_client.py # LlamaCpp client
 │   │   │       └── vertex_client.py # Google Vertex AI client
-│   │   ├── memory/       # Conversation memory modules
-│   │   │   ├── __init__.py   # Memory module initialization
-│   │   │   ├── base_memory.py # BaseChatbotMemory abstract class
-│   │   │   ├── custom_memory.py # In-memory implementation
-│   │   │   └── mongodb_memory.py # MongoDB implementation
-│   │   └── tools/        # Tools for agent capabilities
-│   │       ├── base.py   # BaseTool abstract class
+│   │   ├── memory/       # Memory persistence components
+│   │   │   ├── base.py   # BaseChatbotMemory abstract interface
+│   │   │   ├── memory_factory.py # Factory for memory implementations
+│   │   │   └── clients/  # Memory storage implementations
+│   │   │       ├── in_memory.py # In-memory implementation
+│   │   │       └── mongodb_memory.py # MongoDB implementation
+│   │   └── tools/        # Tool components for agent capabilities
+│   │       ├── base.py   # BaseTool abstract interface
 │   │       ├── serp.py   # Search tool implementation
-│   │       └── __init__.py # ToolProvider and tools initialization
+│   │       └── __init__.py # Tool components initialization
 │   └── common/           # Shared utilities and models
-│       ├── objects.py    # Shared data models
-│       └── config.py     # Configuration management
-├── infrastructure/       # Infrastructure concerns
-│   ├── db/               # Database clients
-│   │   └── mongodb.py    # MongoDB client
-│   └── di/               # Dependency injection
+│       ├── config.py     # Configuration management
+│       ├── models.py     # Data models
+│       ├── schemas.py    # Schema definitions
+│       ├── exceptions.py # Custom exceptions
+│       └── logging.py    # Logging setup
+├── configuration/        # Configuration files and settings
 ├── tests/                # Test directory
 │   ├── api/              # API tests
-│   ├── bot/              # Bot tests
-│   ├── reasoning/        # Reasoning tests
-│   │   └── brains/       # Brain tests
-│   ├── memory/           # Memory tests 
+│   │   └── test_chat.py  # Chat endpoint tests
+│   ├── llm_clients/      # LLM client tests
+│   │   └── test_base_llm_client.py # Base LLM client tests
 │   ├── tools/            # Tool tests
-│   └── llms/             # LLM client tests
+│   │   ├── test_base_tool.py # Base tool tests
+│   │   └── test_serp_tool.py # Search tool tests
+│   ├── conftest.py       # Test configuration
+│   └── test_cli.py       # CLI tests
 ├── docs/                 # Documentation
-│   ├── folder_structure.md # Folder structure guide
-│   └── api.md            # API documentation
 ├── app.py                # FastAPI application
 ├── cli.py                # Command-line interface for local testing
 ├── Dockerfile            # Docker configuration
@@ -84,18 +85,14 @@ The application follows a Bot-Brain architecture with standardized interfaces:
    - **Brains**: Each brain implementation encapsulates reasoning logic
      - Created by a factory based on configuration
      - Follows a common interface defined by `BaseBrain`
-   - **Chains**: Structured reasoning flows for specific tasks
 
-3. **LLM Clients** - Standardized interface for LLM providers
-   - Follows `BaseLLMClient` interface
-   - Supports chat and completion operations
-   - Multiple implementations for different providers (OpenAI, Azure OpenAI, etc.)
+3. **Components Layer** - Reusable components for building chatbot systems
+   - Modular design with standardized interfaces
+   - Manages LLM client implementations through the `BaseLLMClient` interface
+   - Handles memory persistence with `BaseChatbotMemory` implementations
+   - Manages tool integrations through the `BaseTool` interface and `ToolProvider`
+   - Enables easy extension and replacement of functional components
 
-4. **Tools** - Standardized interface for agent tools
-   - Centrally managed by the `ToolProvider` class
-   - Follows `BaseTool` interface
-   - Consistent schema handling with OpenAI tool format
-   - Supports a variety of capabilities (search, etc.)
 
 ## Bot-Brain Architecture Diagram
 
@@ -111,23 +108,32 @@ graph TD
     Bot --> ToolProvider["Tool Provider"]
     
     %% Reasoning Layer
-    BrainInstance -->|calls| LLMClient
-    BrainInstance -->|uses via| ToolProvider
-    BrainInstance -->|reads/writes| Memory
+    BrainInstance -->|calls| ComponentsLayer["Components Layer"]
+    
+    %% Components Layer
+    subgraph ComponentsLayer["Components Layer"]
+        LLMClient["LLM Clients"]
+        MemoryImplementations["Memory Implementations"]
+        ToolsManagement["Tool Management"]
+    end
+    
+    BrainInstance -->|uses| LLMClient
+    BrainInstance -->|uses via| ToolsManagement
+    BrainInstance -->|reads/writes via| MemoryImplementations
     
     %% LLM Layer
     LLMClient -->|calls| ExternalAPI["External LLM API"]
     
     %% Tool Layer
-    ToolProvider -->|manages| SearchTool["Search Tool"]
-    ToolProvider -->|manages| OtherTools["Other Tools"]
+    ToolsManagement -->|manages| SearchTool["Search Tool"]
+    ToolsManagement -->|manages| OtherTools["Other Tools"]
     
     %% Memory Layer
-    Memory -->|implementations| StorageOptions["MongoDB / In-Memory"]
+    MemoryImplementations -->|implementations| StorageOptions["MongoDB / In-Memory"]
     
     %% Configuration
     Config["Configuration"] --> BrainFactory
-    Config --> LLMClient
+    Config --> ComponentsLayer
 ```
 
 ### Brain Composition Detail
@@ -143,117 +149,6 @@ graph TD
     end
 ```
 
-## Implementation Notes
-
-The codebase implements the Bot-Brain architecture with standardized interfaces:
-
-### LLM Client Interface
-
-All LLM clients implement a standard interface:
-
-```python
-class BaseLLMClient(ABC):
-    @abstractmethod
-    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
-        """Send a chat message to the LLM and get a response."""
-        pass
-    
-    @abstractmethod
-    def complete(self, prompt: str, **kwargs: Any) -> str:
-        """Send a completion prompt to the LLM and get a response."""
-        pass
-    
-    @abstractmethod
-    def get_model_info(self) -> Dict[str, Any]:
-        """Get information about the LLM model."""
-        pass
-```
-
-### Tool Interface
-
-Tools follow a standard interface for extension:
-
-```python
-class BaseTool(ABC):
-    def __init__(self, name: str, description: str):
-        self.name = name
-        self.description = description
-    
-    @abstractmethod
-    def run(self, input_data: Any) -> Any:
-        """Execute the tool with the given input."""
-        pass
-    
-    @abstractmethod
-    def get_parameters_schema(self) -> Dict[str, Any]:
-        """Get the JSON schema for the tool's parameters."""
-        pass
-    
-    def to_openai_tool(self) -> Dict[str, Any]:
-        """Convert the tool to an OpenAI tool format."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": self.get_parameters_schema(),
-            }
-        }
-```
-
-### Tool Provider
-
-The `ToolProvider` class centralizes tool management for the application:
-
-```python
-class ToolProvider:
-    def __init__(self):
-        """Initialize the tool provider with default tools."""
-        self._tools: List[BaseTool] = []
-        
-        # Register default tools here
-        # self.register_tool(CustomSearchTool())
-    
-    def register_tool(self, tool: BaseTool) -> None:
-        """Register a new tool."""
-        self._tools.append(tool)
-    
-    def get_tools(self) -> List[BaseTool]:
-        """Get all registered tools."""
-        return self._tools
-```
-
-This centralized approach allows for easy addition of new tools and ensures they are consistently available to the Bot and Brain components.
-
-### Brain Implementations
-
-Brain implementations are now under the reasoning/brains/services module:
-
-```python
-class BaseBrain(ABC):
-    @abstractmethod
-    def think(self, query: str, context: Optional[Dict[str, Any]] = None) -> str:
-        """Process the query and return a response."""
-        pass
-    
-    @abstractmethod
-    def reset(self) -> None:
-        """Reset the brain's state."""
-        pass
-```
-
-Different implementations include:
-- `OpenAIBrain` - Brain using OpenAI models for reasoning
-- `LlamaBrain` - Brain using LlamaCpp for local reasoning
-- `AzureOpenAIBrain` - Brain using Azure OpenAI models for reasoning
-
-### Testing
-
-The `tests` directory includes comprehensive tests:
-
-- Mock implementations of `BaseLLMClient` and `BaseTool` for testing
-- Unit tests for tools, LLM clients, and other components
-- API tests for the FastAPI endpoints
 
 ## Getting Started
 
