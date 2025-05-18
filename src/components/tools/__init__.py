@@ -23,7 +23,7 @@ class ToolProvider:
         self._tools: List[Any] = []
         
         # Register default tools here
-        # self.register_tool(CustomSearchTool())
+        self.register_tool(CustomSearchTool())
     
     def register_tool(self, tool: BaseTool) -> None:
         """

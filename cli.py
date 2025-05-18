@@ -57,11 +57,12 @@ async def process_input(chat_engine: ChatEngine, user_input: str, conversation_i
     # Check for exit commands
     if user_input.lower() in ["exit", "quit"]:
         print("\nGoodbye!")
+        chat_engine.close()
         sys.exit(0)
         
     # Process the message
     result = await chat_engine.process_message(user_input, conversation_id)
-    return result
+    return f"Bot: {result.response}\n\n{result.additional_kwargs}"
 
 
 async def main():
@@ -106,6 +107,8 @@ async def main():
         logger.error(f"Error in CLI: {e}")
         print(f"An error occurred: {e}")
         sys.exit(1)
+    finally:
+        chat_engine.close()
 
 
 if __name__ == "__main__":

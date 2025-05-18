@@ -37,6 +37,10 @@ class Bot:
         self.brain = brain
         self.memory = memory
         self.tool_provider = tool_provider
+
+        available_tools = self.tool_provider.get_tools()
+        if available_tools:
+            self.brain.use_tools(available_tools)
     
     def _prepare_context(self, conversation_id: str) -> Dict[str, Any]:
         """
@@ -79,15 +83,16 @@ class Bot:
             self.memory.add_messages(
                 [
                     {"role": "user", "content": sentence},
-                    {"role": "assistant", "content": response}
+                    {"role": "assistant", "content": response["content"]}
                 ],
                 conversation_id
             )
         
         # Return a structured response
         return ChatResponse(
-            response=response,
-            conversation_id=conversation_id or "default"
+            response=response["content"],
+            conversation_id=conversation_id or "default",
+            additional_kwargs=response["additional_kwargs"]
         )
     
     def reset_history(self, conversation_id: str) -> None:
@@ -129,3 +134,7 @@ class Bot:
             }
         
         return info 
+
+    def close(self) -> None:
+        """Close the bot."""
+        self.memory.close()

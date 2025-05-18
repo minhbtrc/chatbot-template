@@ -4,6 +4,7 @@ Custom search tool module.
 This module provides a tool for web search using the SerpAPI wrapper.
 """
 
+import os
 from typing import Optional, Dict, Any
 
 from langchain_community.utilities import SerpAPIWrapper
@@ -31,7 +32,7 @@ class CustomSearchTool(BaseTool):
                 "gl": "us",
                 "hl": "en",
             },
-            serpapi_api_key=api_key
+            serpapi_api_key=api_key or os.getenv("SERPAPI_API_KEY")
         )
 
     def run(self, input_data: str) -> str:

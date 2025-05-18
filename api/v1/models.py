@@ -1,5 +1,5 @@
 """API models for chatbot requests and responses."""
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from pydantic import BaseModel, Field
 
@@ -16,3 +16,4 @@ class ChatResponse(BaseModel):
     
     output: str = Field(..., description="AI response")
     conversation_id: str = Field(..., description="Conversation ID")
+    additional_kwargs: Dict[str, Any] = Field(..., description="Additional kwargs")

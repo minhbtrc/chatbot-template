@@ -41,7 +41,7 @@ class LLMBrain(BaseBrain):
         # Determine LLM type from config or parameter
         self.llm_type = config.model_type or "azureopenai"
     
-    def think(self, query: str, context: Optional[Dict[str, Any]] = None, **kwargs: Any) -> str:
+    def think(self, query: str, context: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """
         Process the query using the configured LLM and return a response.
         
@@ -97,8 +97,8 @@ class LLMBrain(BaseBrain):
         Args:
             tools: List of tools to use
         """
-        logger.warning("LLM Agent doesn't use tools, use other kind of brain for that")
-        pass
+        logger.warning("Using tools with LLM brain will only generate tool calls as additional kwargs, the LLM itself doesn't execute the tools.")
+        self.llm_client.bind_tools(tools)
         
     def get_info(self) -> Dict[str, Any]:
         """Get information about the brain."""

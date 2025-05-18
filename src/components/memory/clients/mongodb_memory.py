@@ -158,3 +158,7 @@ class MongoMemory(BaseChatbotMemory):
                 conversation_ids.add(msg["conversation_id"])
         
         return list(conversation_ids) 
+    
+    def close(self) -> None:
+        """Close the memory."""
+        self.client.close()

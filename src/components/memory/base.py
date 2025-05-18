@@ -69,3 +69,10 @@ class BaseChatbotMemory(ABC):
             List of conversation IDs
         """
         pass
+    
+    @abstractmethod
+    def close(self) -> None:
+        """
+        Close the memory.
+        """
+        pass

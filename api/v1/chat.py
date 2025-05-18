@@ -45,8 +45,9 @@ async def chat(request: ChatRequest, bot: Bot = Depends(get_bot)) -> ChatRespons
     
     # Return the response in the expected format for the API
     return ChatResponse(
-        output=result["response"],
-        conversation_id=result["conversation_id"]
+        output=result.response,
+        conversation_id=result.conversation_id,
+        additional_kwargs=result.additional_kwargs
     )
 
 

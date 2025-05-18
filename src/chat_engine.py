@@ -7,6 +7,7 @@ import asyncio
 
 from injector import inject
 
+from src.common.schemas import ChatResponse
 from src.reasoning.brains.base import BaseBrain
 from src.bot import Bot
 from src.common.config import Config
@@ -32,7 +33,7 @@ class ChatEngine:
         # Create bot instance
         self.bot = bot
     
-    async def process_message(self, user_input: str, conversation_id: Optional[str] = None) -> str:
+    async def process_message(self, user_input: str, conversation_id: Optional[str] = None) -> ChatResponse:
         """
         Process a user message and get a response.
         
@@ -55,7 +56,7 @@ class ChatEngine:
         )
         
         # Return just the response text
-        return response.response
+        return response
     
     def clear_history(self, conversation_id: str) -> None:
         """
@@ -69,4 +70,4 @@ class ChatEngine:
     def close(self) -> None:
         """Close any resources used by the chat manager."""
         # No resources to close in this implementation
-        pass
+        self.bot.close()

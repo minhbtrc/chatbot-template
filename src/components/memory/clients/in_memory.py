@@ -62,3 +62,7 @@ class InMemory(BaseChatbotMemory):
             List of conversation IDs
         """
         return list(self.memory.keys())
+
+    def close(self) -> None:
+        """Close the memory."""
+        pass

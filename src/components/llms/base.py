@@ -5,7 +5,7 @@ This module defines the base interface for all LLM clients.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 class BaseLLMClient(ABC):
@@ -15,9 +15,16 @@ class BaseLLMClient(ABC):
     This defines a standard interface that all LLM client implementations
     must follow to ensure consistent usage across the application.
     """
+
+    @abstractmethod
+    def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
+        """
+        Bind tools to the LLM client.
+        """
+        pass
     
     @abstractmethod
-    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
+    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
         """
         Send a chat message to the LLM and get a response.
         
@@ -31,7 +38,7 @@ class BaseLLMClient(ABC):
         pass
     
     @abstractmethod
-    def complete(self, prompt: str, **kwargs: Any) -> str:
+    def complete(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         """
         Send a completion prompt to the LLM and get a response.
         
@@ -44,7 +51,7 @@ class BaseLLMClient(ABC):
         """
         pass
     
-    async def achat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
+    async def achat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
         """
         Send a chat message to the LLM asynchronously and get a response.
         
@@ -60,7 +67,7 @@ class BaseLLMClient(ABC):
         import asyncio
         return await asyncio.to_thread(self.chat, messages, **kwargs)
     
-    async def acomplete(self, prompt: str, **kwargs: Any) -> str:
+    async def acomplete(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         """
         Send a completion prompt to the LLM asynchronously and get a response.
         
