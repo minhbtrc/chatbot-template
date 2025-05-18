@@ -43,22 +43,41 @@ class AzureOpenAIClient(BaseLLMClient):
                         f"deployment={config.azure_chat_model_deployment}, api_version={config.azure_chat_model_version}")
             
             # Initialize Azure OpenAI client
+            self.temperature = getattr(config, "temperature", 0.7)
+            self.max_retries = getattr(config, "max_retries", 3)
+            self.request_timeout = getattr(config, "request_timeout", 60)
+
+            callbacks: List[Any] = []
+            if config.enable_langfuse:
+                from langfuse.callback import CallbackHandler
+                langfuse_handler = CallbackHandler(
+                    secret_key=config.langfuse_secret_key,
+                    public_key=config.langfuse_public_key,
+                    host=config.langfuse_host
+                )
+                callbacks = [langfuse_handler]
+
             self.client = AzureChatOpenAI(
                 azure_deployment=config.azure_chat_model_deployment,
                 api_key=SecretStr(config.azure_chat_model_key or ""),
                 api_version=config.azure_chat_model_version,
                 azure_endpoint=config.azure_chat_model_endpoint or "",
-                temperature=getattr(config, "temperature", 0.7),
-                max_retries=getattr(config, "max_retries", 3),
-                timeout=getattr(config, "request_timeout", 60)
+                temperature=self.temperature,
+                max_retries=self.max_retries,
+                timeout=self.request_timeout,
+                callbacks=callbacks
             )
-            self.temperature = getattr(config, "temperature", 0.7)
-            self.max_retries = getattr(config, "max_retries", 3)
-            self.request_timeout = getattr(config, "request_timeout", 60)
             
         except Exception as e:
             logger.error(f"Failed to initialize Azure OpenAI client: {str(e)}")
             raise ConnectionError(f"Failed to initialize Azure OpenAI client: {str(e)}")
+    
+    def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
+        """
+        Bind tools to the Azure OpenAI client.
+        """
+        if tools:
+            self.client = self.client.bind_tools([tool.to_openai_tool() for tool in tools])
     
     @retry(
         stop=stop_after_attempt(3),
@@ -66,7 +85,7 @@ class AzureOpenAIClient(BaseLLMClient):
         retry=retry_if_exception_type((OpenAIConnectionError, OpenAIRateLimitError)),
         reraise=True
     )
-    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
+    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
         """
         Send a chat message to Azure OpenAI and get a response.
         
@@ -105,7 +124,7 @@ class AzureOpenAIClient(BaseLLMClient):
             )
             
             # Return the content of the first choice
-            return response.content  # Return empty string if content is None
+            return {"content": response.content, "additional_kwargs": response.additional_kwargs}  # Return empty string if content is None
             
         except OpenAIRateLimitError as e:
             logger.warning(f"Azure OpenAI rate limit exceeded: {str(e)}")
@@ -132,7 +151,7 @@ class AzureOpenAIClient(BaseLLMClient):
         retry=retry_if_exception_type((OpenAIConnectionError, OpenAIRateLimitError)),
         reraise=True
     )
-    def complete(self, prompt: str, **kwargs: Any) -> str:
+    def complete(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         """
         Send a completion prompt to Azure OpenAI and get a response.
         
@@ -153,7 +172,7 @@ class AzureOpenAIClient(BaseLLMClient):
         messages = [{"role": "user", "content": prompt}]
         return self.chat(messages, **kwargs)
     
-    async def achat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
+    async def achat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
         """
         Send a chat message to Azure OpenAI asynchronously and get a response.
         
@@ -174,7 +193,7 @@ class AzureOpenAIClient(BaseLLMClient):
         # In a production environment, you would use a dedicated async client
         return await asyncio.to_thread(self.chat, messages, **kwargs)
     
-    async def acomplete(self, prompt: str, **kwargs: Any) -> str:
+    async def acomplete(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         """
         Send a completion prompt to Azure OpenAI asynchronously and get a response.
         

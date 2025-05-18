@@ -2,7 +2,7 @@
 Vertex AI client wrapper for integration with LangChain.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import os
 import json
 
@@ -12,6 +12,7 @@ import vertexai
 
 from src.components.llms.base import BaseLLMClient
 from src.common.config import Config
+from src.common.logging import logger
 
 
 class VertexAIClient(BaseLLMClient):
@@ -31,6 +32,13 @@ class VertexAIClient(BaseLLMClient):
             raise ValueError("Vertex AI credentials file not found in environment or config")
         
         self._initialize_vertex_ai()
+        self.client = self.create_chat_model()
+
+    def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
+        """
+        Bind tools to the Vertex AI client.
+        """
+        logger.warning("Vertex AI client doesn't support tools")
     
     def _initialize_vertex_ai(self):
         """Initialize Vertex AI with credentials."""

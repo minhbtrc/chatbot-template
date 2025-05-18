@@ -4,13 +4,13 @@ LlamaCpp client module.
 This module provides a client for interacting with LlamaCpp models.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from injector import inject
 from langchain_community.llms import LlamaCpp
 
 from src.common.config import Config
-
+from src.common.logging import logger
 
 class LlamaCppClient:
     """Client for interacting with LlamaCpp models."""
@@ -24,6 +24,12 @@ class LlamaCppClient:
         """
         self.config = config
         self.model_path = getattr(config, "model_path", None)
+
+    def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
+        """
+        Bind tools to the LlamaCpp client.
+        """
+        logger.warning("LlamaCpp client doesn't support tools")
     
     def create_llm(self, model_kwargs: Optional[Dict[str, Any]] = None) -> LlamaCpp:
         """

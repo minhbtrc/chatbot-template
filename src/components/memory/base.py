@@ -25,6 +25,17 @@ class BaseChatbotMemory(ABC):
             conversation_id: ID of the conversation
         """
         pass
+
+    def add_messages(self, messages: List[Dict[str, str]], conversation_id: str) -> None:
+        """
+        Add a list of messages to the conversation history.
+        
+        Args:
+            messages: List of messages to add
+            conversation_id: ID of the conversation
+        """
+        for message in messages:
+            self.add_message(role=message["role"], content=message["content"], conversation_id=conversation_id)
     
     @abstractmethod
     def get_history(self, conversation_id: str) -> List[Dict[str, str]]:
@@ -56,5 +67,12 @@ class BaseChatbotMemory(ABC):
         
         Returns:
             List of conversation IDs
+        """
+        pass
+    
+    @abstractmethod
+    def close(self) -> None:
+        """
+        Close the memory.
         """
         pass

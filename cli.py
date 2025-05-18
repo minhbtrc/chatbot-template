@@ -13,9 +13,10 @@ Exit the chat by typing 'exit', 'quit', or pressing Ctrl+C.
 
 import argparse
 import sys
+import asyncio
 from typing import Optional, cast
 
-from src.bot import Bot
+from src.chat_engine import ChatEngine
 from src.common.config import Config
 from src.common.logging import logger
 from dependency_injector import get_instance, update_injector_with_config
@@ -51,19 +52,20 @@ def print_welcome_message():
     print()
 
 
-def process_input(bot: Bot, user_input: str, conversation_id: str) -> Optional[str]:
+async def process_input(chat_engine: ChatEngine, user_input: str, conversation_id: str) -> Optional[str]:
     """Process user input and return bot response."""
     # Check for exit commands
     if user_input.lower() in ["exit", "quit"]:
         print("\nGoodbye!")
+        chat_engine.close()
         sys.exit(0)
         
     # Process the message
-    result = bot.call(user_input, conversation_id)
-    return result["response"]
+    result = await chat_engine.process_message(user_input, conversation_id)
+    return f"Bot: {result.response}\n\n{result.additional_kwargs}"
 
 
-def main():
+async def main():
     """Run the CLI application."""
     # Parse command line arguments
     parser = create_parser()
@@ -81,7 +83,7 @@ def main():
     logger.info(f"Starting CLI with model: {config.model_type}")
     
     # Create the bot with the brain and memory
-    bot = cast(Bot, get_instance(Bot))
+    chat_engine = cast(ChatEngine, get_instance(ChatEngine))
     
     # Print welcome message
     print_welcome_message()
@@ -93,7 +95,7 @@ def main():
             user_input = input("User: ")
             
             # Process input and get response
-            response = process_input(bot, user_input, args.conversation_id)
+            response = await process_input(chat_engine, user_input, args.conversation_id)
             
             # Print the response
             print(f"Bot: {response}")
@@ -105,7 +107,9 @@ def main():
         logger.error(f"Error in CLI: {e}")
         print(f"An error occurred: {e}")
         sys.exit(1)
+    finally:
+        chat_engine.close()
 
 
 if __name__ == "__main__":
-    main() 
+    asyncio.run(main()) 

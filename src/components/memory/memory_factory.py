@@ -1,4 +1,4 @@
-from src.components.memory.base_memory import BaseChatbotMemory
+from src.components.memory.base import BaseChatbotMemory
 from src.common.config import Config
 from src.components.memory.clients.in_memory import InMemory
 from src.components.memory.clients.mongodb_memory import MongoMemory

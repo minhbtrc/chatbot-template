@@ -2,8 +2,11 @@
 Custom search tool module.
 
 This module provides a tool for web search using the SerpAPI wrapper.
+
+Visit https://serpapi.com/ to get your API key.
 """
 
+import os
 from typing import Optional, Dict, Any
 
 from langchain_community.utilities import SerpAPIWrapper
@@ -25,13 +28,14 @@ class CustomSearchTool(BaseTool):
             name="web_search",
             description="Useful for when you need to answer questions about current events, date, or factual information"
         )
+        print(f"-======{api_key or os.getenv("SERPAPI_API_KEY")}")
         self._search = SerpAPIWrapper(
             params={
                 "engine": "google",
                 "gl": "us",
                 "hl": "en",
             },
-            serpapi_api_key=api_key
+            serpapi_api_key=api_key or os.getenv("SERPAPI_API_KEY")
         )
 
     def run(self, input_data: str) -> str:

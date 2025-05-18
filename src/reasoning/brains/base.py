@@ -18,7 +18,7 @@ class BaseBrain(ABC):
     """
     
     @abstractmethod
-    def think(self, query: str, context: Optional[Dict[str, Any]] = None) -> str:
+    def think(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Process the input query and return a response.
         

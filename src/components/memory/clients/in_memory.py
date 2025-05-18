@@ -4,7 +4,7 @@ Custom in-memory implementation for chat history.
 
 from typing import Dict, List
 
-from src.components.memory.base_memory import BaseChatbotMemory
+from src.components.memory.base import BaseChatbotMemory
 
 
 class InMemory(BaseChatbotMemory):
@@ -62,3 +62,7 @@ class InMemory(BaseChatbotMemory):
             List of conversation IDs
         """
         return list(self.memory.keys())
+
+    def close(self) -> None:
+        """Close the memory."""
+        pass

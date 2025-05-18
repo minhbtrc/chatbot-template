@@ -5,8 +5,9 @@ from typing import Dict, Any, Optional
 
 from injector import inject
 
+from src.common.schemas import ChatResponse
 from src.reasoning.brains.base import BaseBrain
-from src.components.memory.base_memory import BaseChatbotMemory
+from src.components.memory.base import BaseChatbotMemory
 from src.components.tools import ToolProvider
 
 
@@ -36,12 +37,30 @@ class Bot:
         self.brain = brain
         self.memory = memory
         self.tool_provider = tool_provider
-        
-        # Configure the brain with tools from the provider if available
-        tools = tool_provider.get_tools() if tool_provider else []
-        self.brain.use_tools(tools)
+
+        available_tools = self.tool_provider.get_tools()
+        if available_tools:
+            self.brain.use_tools(available_tools)
     
-    def call(self, sentence: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
+    def _prepare_context(self, conversation_id: str) -> Dict[str, Any]:
+        """
+        Prepare the context for the brain.
+        
+        Args:
+            conversation_id: ID of the conversation
+            
+        Returns:
+            Context for the brain
+        """
+        # Get conversation history from memory if available
+        context: Dict[str, Any] = {}
+        
+        history = self.memory.get_history(conversation_id)
+        if history:
+            context["history"] = history
+        return context
+    
+    def call(self, sentence: str, conversation_id: Optional[str] = None) -> ChatResponse:
         """
         Process a user message and generate a response.
         
@@ -50,32 +69,31 @@ class Bot:
             conversation_id: ID for the conversation
             
         Returns:
-            Response dictionary
+            ChatResponse
         """
-        # Get conversation history from memory if available
-        context: Dict[str, Any] = {}
         if self.memory and conversation_id:
-            history = self.memory.get_history(conversation_id)
-            if history:
-                context["history"] = history
-        
+            context = self._prepare_context(conversation_id)
+        else:
+            context = {}
         # Generate a response using the brain
         response = self.brain.think(sentence, context)
         
         # Save the conversation to memory
         if self.memory and conversation_id:
-            self.memory.add_message(
-                "user", sentence, conversation_id
-            )
-            self.memory.add_message(
-                "assistant", response, conversation_id
+            self.memory.add_messages(
+                [
+                    {"role": "user", "content": sentence},
+                    {"role": "assistant", "content": response["content"]}
+                ],
+                conversation_id
             )
         
         # Return a structured response
-        return {
-            "response": response,
-            "conversation_id": conversation_id or "default"
-        }
+        return ChatResponse(
+            response=response["content"],
+            conversation_id=conversation_id or "default",
+            additional_kwargs=response["additional_kwargs"]
+        )
     
     def reset_history(self, conversation_id: str) -> None:
         """
@@ -116,3 +134,7 @@ class Bot:
             }
         
         return info 
+
+    def close(self) -> None:
+        """Close the bot."""
+        self.memory.close()

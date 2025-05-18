@@ -12,6 +12,7 @@ from openai import OpenAI
 
 from src.components.llms.base import BaseLLMClient
 from src.common.config import Config
+from src.common.logging import logger
 
 
 class OpenAIClient(BaseLLMClient):
@@ -28,8 +29,14 @@ class OpenAIClient(BaseLLMClient):
         self.client = OpenAI(api_key=config.openai_api_key)
         self.model_name = config.base_model_name or "gpt-3.5-turbo"
         self.temperature = 0.7
+
+    def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
+        """
+        Bind tools to the OpenAI client.
+        """
+        logger.warning("OpenAI client doesn't support tools")
     
-    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
+    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
         """
         Send a chat message to OpenAI and get a response.
         
@@ -66,9 +73,9 @@ class OpenAIClient(BaseLLMClient):
         
         # Return the content of the first choice
         content = response.choices[0].message.content
-        return content or ""  # Return empty string if content is None
+        return {"content": content, "additional_kwargs": getattr(response.choices[0].message, "additional_kwargs")}  # Return empty string if content is None
     
-    def complete(self, prompt: str, **kwargs: Any) -> str:
+    def complete(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         """
         Send a completion prompt to OpenAI and get a response.
         
