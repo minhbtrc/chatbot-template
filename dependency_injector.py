@@ -1,5 +1,6 @@
 from injector import Binder, Injector, Module, singleton
 
+from src.reasoning.brains.brain_factory import create_brain
 from src.common.config import Config
 from src.components.llms import create_llm_client, BaseLLMClient
 from src.components.memory import create_memory, BaseChatbotMemory
@@ -7,7 +8,6 @@ from src.components.tools import ToolProvider
 from src.bot import Bot
 from src.chat_engine import ChatEngine
 from src.reasoning.brains.base import BaseBrain
-from src.reasoning.brains.services.llm_brain import LLMBrain
 # Global injector instance
 _global_injector = None
 
@@ -30,7 +30,9 @@ class ConfigurableModule(Module):
         tool_provider = ToolProvider()
         binder.bind(ToolProvider, to=tool_provider, scope=singleton)
         
-        binder.bind(BaseBrain, to=LLMBrain, scope=singleton)
+        brain = create_brain(self.config, llm_client, tool_provider)
+        binder.bind(BaseBrain, to=brain, scope=singleton)
+
         binder.bind(Bot, to=Bot, scope=singleton)
         binder.bind(ChatEngine, to=ChatEngine, scope=singleton)
 

@@ -47,17 +47,7 @@ class AzureOpenAIClient(BaseLLMClient):
             self.max_retries = getattr(config, "max_retries", 3)
             self.request_timeout = getattr(config, "request_timeout", 60)
 
-            self.client = AzureChatOpenAI(
-                azure_deployment=config.azure_chat_model_deployment,
-                api_key=SecretStr(config.azure_chat_model_key or ""),
-                api_version=config.azure_chat_model_version,
-                azure_endpoint=config.azure_chat_model_endpoint or "",
-                temperature=self.temperature,
-                max_retries=self.max_retries,
-                timeout=self.request_timeout
-            )
-
-            self.callbacks: List[Any] = []
+            callbacks: List[Any] = []
             if config.enable_langfuse:
                 from langfuse.callback import CallbackHandler
                 langfuse_handler = CallbackHandler(
@@ -65,12 +55,23 @@ class AzureOpenAIClient(BaseLLMClient):
                     public_key=config.langfuse_public_key,
                     host=config.langfuse_host
                 )
-                self.callbacks = [langfuse_handler]
+                callbacks = [langfuse_handler]
+
+            self.client = AzureChatOpenAI(
+                azure_deployment=config.azure_chat_model_deployment,
+                api_key=SecretStr(config.azure_chat_model_key or ""),
+                api_version=config.azure_chat_model_version,
+                azure_endpoint=config.azure_chat_model_endpoint or "",
+                temperature=self.temperature,
+                max_retries=self.max_retries,
+                timeout=self.request_timeout,
+                callbacks=callbacks
+            )
             
         except Exception as e:
             logger.error(f"Failed to initialize Azure OpenAI client: {str(e)}")
             raise ConnectionError(f"Failed to initialize Azure OpenAI client: {str(e)}")
-        
+    
     def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
         """
         Bind tools to the Azure OpenAI client.
@@ -119,8 +120,7 @@ class AzureOpenAIClient(BaseLLMClient):
             # Call the Azure OpenAI API
             # For Azure OpenAI, the deployment name is passed as the model parameter
             response = self.client.invoke(
-                input=formatted_messages,
-                config={"callbacks": self.callbacks}
+                input=formatted_messages
             )
             
             # Return the content of the first choice

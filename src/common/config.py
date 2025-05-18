@@ -62,6 +62,8 @@ class Config(BaseModel):
     langfuse_public_key: Optional[str] = Field(default=None, description="")
     langfuse_host: Optional[str] = Field(default=None, description="")
 
+    brain_type: Optional[str] = Field(default="AGENT", description="Type of brain to use (AGENT, LLM)")
+
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values: Any):

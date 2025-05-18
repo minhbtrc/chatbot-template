@@ -32,6 +32,7 @@ class VertexAIClient(BaseLLMClient):
             raise ValueError("Vertex AI credentials file not found in environment or config")
         
         self._initialize_vertex_ai()
+        self.client = self.create_chat_model()
 
     def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
         """

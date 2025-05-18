@@ -6,6 +6,8 @@ This module provides tools and utilities for the bot to use for various tasks.
 
 from typing import List, Any
 
+from langchain_core.tools import Tool
+
 from .serp import CustomSearchTool
 from .base import BaseTool, SimpleTool
 
@@ -42,6 +44,23 @@ class ToolProvider:
             List of registered tools
         """
         return self._tools
+    
+    def get_langchain_tools(self) -> List[Tool]:
+        """
+        Get all registered tools as LangChain tools.
+        
+        Returns:
+            List of registered tools as LangChain tools
+        """
+        return [
+            Tool(
+                name=tool.name,
+                description=tool.description,
+                func=tool.run,
+                verbose=True
+            )
+            for tool in self._tools
+        ]
 
 # Export public classes and functions
 __all__ = ["CustomSearchTool", "BaseTool", "SimpleTool", "ToolProvider"]

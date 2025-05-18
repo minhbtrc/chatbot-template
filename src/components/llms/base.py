@@ -7,6 +7,10 @@ This module defines the base interface for all LLM clients.
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 
+from injector import inject
+
+from src.common.config import Config
+
 
 class BaseLLMClient(ABC):
     """
@@ -15,6 +19,10 @@ class BaseLLMClient(ABC):
     This defines a standard interface that all LLM client implementations
     must follow to ensure consistent usage across the application.
     """
+    @inject
+    def __init__(self, config: Config):
+        self.config = config
+        self.client: Any = None
 
     @abstractmethod
     def bind_tools(self, tools: Optional[List[Any]] = None) -> None:
