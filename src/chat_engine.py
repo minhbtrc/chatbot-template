@@ -55,7 +55,7 @@ class ChatEngine:
         )
         
         # Return just the response text
-        return response["response"]
+        return response.response
     
     def clear_history(self, conversation_id: str) -> None:
         """

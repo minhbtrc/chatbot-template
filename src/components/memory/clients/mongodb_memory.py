@@ -2,11 +2,14 @@
 MongoDB memory implementation.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 import datetime
 
-from src.components.memory.base_memory import BaseChatbotMemory
-from src.components.db.mongodb import MongoDBClient
+from pymongo import MongoClient
+from pymongo.collection import Collection
+from pymongo.database import Database
+
+from src.components.memory.base import BaseChatbotMemory
 from src.common.config import Config
 
 
@@ -17,7 +20,7 @@ class MongoMemory(BaseChatbotMemory):
     Stores conversation history in a MongoDB collection.
     """
     
-    def __init__(self, config: Config, mongo_client: Optional[MongoDBClient] = None):
+    def __init__(self, config: Config):
         """
         Initialize the MongoDB memory.
         
@@ -26,8 +29,38 @@ class MongoMemory(BaseChatbotMemory):
             mongo_client: MongoDB client (created if not provided)
         """
         self.config = config
-        self.client = mongo_client or MongoDBClient(config)
+        self.client: MongoClient = self._create_client()
+        self.collection: Collection = self._get_collection()
+        self.db: Database = self._get_database()
         self.conversation_cache: Dict[str, List[Dict[str, str]]] = {}
+
+    def _get_database(self) -> Database:
+        """
+        Get the MongoDB database.
+        
+        Returns:
+            MongoDB database
+        """
+        return self.client[self.config.mongo_database]
+
+    def _create_client(self) -> MongoClient:
+        """
+        Create a MongoDB client.
+        
+        Returns:
+            MongoDB client
+        """
+        # Use connection string from config
+        return MongoClient(self.config.mongo_uri)
+    
+    def _get_collection(self) -> Collection:
+        """
+        Get the MongoDB collection.
+        
+        Returns:
+            MongoDB collection
+        """
+        return self.db[self.config.mongo_collection]
     
     def add_message(self, role: str, content: str, conversation_id: str) -> None:
         """
@@ -47,7 +80,7 @@ class MongoMemory(BaseChatbotMemory):
         }
         
         # Insert the message into the database
-        self.client.insert_one(message)
+        self.collection.insert_one(message)
         
         # Clear the cache for this conversation
         if conversation_id in self.conversation_cache:
@@ -68,9 +101,11 @@ class MongoMemory(BaseChatbotMemory):
             return self.conversation_cache[conversation_id]
         
         # Query the database for messages in this conversation
-        messages = self.client.find_many({
-            "conversation_id": conversation_id
-        })
+        messages = list(
+            self.collection.find({
+                "conversation_id": conversation_id
+            })
+        )
         
         # Sort by timestamp
         messages.sort(key=lambda x: x.get("timestamp", 0))
@@ -98,10 +133,10 @@ class MongoMemory(BaseChatbotMemory):
         query = {"conversation_id": conversation_id}
         
         # MongoDB doesn't have a delete_many method in our interface, so we use a loop
-        messages = self.client.find_many(query)
+        messages = list(self.collection.find(query))
         for msg in messages:
             if "_id" in msg:
-                self.client.delete_one({"_id": msg["_id"]})
+                self.collection.delete_one({"_id": msg["_id"]})
         
         # Clear the cache for this conversation
         if conversation_id in self.conversation_cache:
@@ -115,7 +150,7 @@ class MongoMemory(BaseChatbotMemory):
             List of conversation IDs
         """
         # Find all unique conversation IDs
-        messages = self.client.find_many({})
+        messages = list(self.collection.find({}))
         conversation_ids: Set[str] = set()
         
         for msg in messages:

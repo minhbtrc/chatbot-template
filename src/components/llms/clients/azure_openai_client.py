@@ -43,21 +43,22 @@ class AzureOpenAIClient(BaseLLMClient):
                         f"deployment={config.azure_chat_model_deployment}, api_version={config.azure_chat_model_version}")
             
             # Initialize Azure OpenAI client
+            self.temperature = getattr(config, "temperature", 0.7)
+            self.max_retries = getattr(config, "max_retries", 3)
+            self.request_timeout = getattr(config, "request_timeout", 60)
+
             self.client = AzureChatOpenAI(
                 azure_deployment=config.azure_chat_model_deployment,
                 api_key=SecretStr(config.azure_chat_model_key or ""),
                 api_version=config.azure_chat_model_version,
                 azure_endpoint=config.azure_chat_model_endpoint or "",
-                temperature=getattr(config, "temperature", 0.7),
-                max_retries=getattr(config, "max_retries", 3),
-                timeout=getattr(config, "request_timeout", 60)
+                temperature=self.temperature,
+                max_retries=self.max_retries,
+                timeout=self.request_timeout
             )
-            self.temperature = getattr(config, "temperature", 0.7)
-            self.max_retries = getattr(config, "max_retries", 3)
-            self.request_timeout = getattr(config, "request_timeout", 60)
 
             self.callbacks: List[Any] = []
-            if config.llm_tracing_enable:
+            if config.enable_langfuse:
                 from langfuse.callback import CallbackHandler
                 langfuse_handler = CallbackHandler(
                     secret_key=config.langfuse_secret_key,
