@@ -136,19 +136,6 @@ graph TD
     Config --> ComponentsLayer
 ```
 
-### Brain Composition Detail
-
-```mermaid
-graph TD
-    subgraph Brain
-        BrainNode["Brain"] --> ChainManager
-        BrainNode --> BrainTools["Brain Tools"]
-        BrainNode --> BrainMemory["Brain Memory"]
-        ChainManager --> LLMClientNode["LLM Client"]
-        ChainManager --> ToolCalls["Tool Calls"]
-    end
-```
-
 
 ## Getting Started
 
