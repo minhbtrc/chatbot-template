@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Request
 from typing import Dict, Any
 
 from api.v1.models import ChatRequest, ChatResponse
-from src.bot import Bot
+from core.bot import Bot
 
 
 # Create router

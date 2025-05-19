@@ -5,7 +5,7 @@ Health check API endpoints.
 from typing import Dict, Any
 from fastapi import APIRouter, Request, Depends
 
-from src.bot import Bot
+from core.bot import Bot
 
 
 # Create router

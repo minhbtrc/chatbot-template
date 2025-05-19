@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 import cli
-from src.bot import Bot
+from core.bot import Bot
 from src.common.logging import logger
 
 

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
 from api.v1.models import ChatRequest
-from src.bot import Bot
+from core.bot import Bot
 
 
 def test_chat_endpoint(test_client):

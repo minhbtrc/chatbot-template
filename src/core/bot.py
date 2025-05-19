@@ -6,9 +6,8 @@ from typing import Dict, Any, Optional
 from injector import inject
 
 from src.common.schemas import ChatResponse
-from src.reasoning.brains.base import BaseBrain
-from src.components.memory.base import BaseChatbotMemory
-from src.components.tools import ToolProvider
+from src.core.brains import BrainInterface
+from src.core.components import MemoryInterface, ToolProvider
 
 
 class Bot:
@@ -22,8 +21,8 @@ class Bot:
     @inject
     def __init__(
         self,
-        brain: BaseBrain,
-        memory: BaseChatbotMemory,
+        brain: BrainInterface,
+        memory: MemoryInterface,
         tool_provider: ToolProvider,
     ):
         """

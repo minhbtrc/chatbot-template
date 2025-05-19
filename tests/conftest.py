@@ -38,7 +38,7 @@ def mock_brain(monkeypatch):
 @pytest.fixture
 def mock_bot(mock_brain):
     """Fixture for mocked Bot."""
-    from src.bot import Bot
+    from core.bot import Bot
     from src.components.memory.custom_memory import InMemory
     from src.components.tools import ToolProvider
     

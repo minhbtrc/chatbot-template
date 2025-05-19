@@ -16,7 +16,7 @@ from openai import RateLimitError as OpenAIRateLimitError
 from openai import APIConnectionError as OpenAIConnectionError
 from injector import inject
 
-from src.components.llms.base import BaseLLMClient
+from src.core.components.llms.base import BaseLLMClient
 from src.common.config import Config
 from src.common.exceptions import APIError, RateLimitError, ConnectionError, LLMClientError
 from src.common.logging import logger

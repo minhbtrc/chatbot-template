@@ -10,7 +10,7 @@ from injector import inject
 from langchain_openai import ChatOpenAI
 from openai import OpenAI
 
-from src.components.llms.base import BaseLLMClient
+from src.core.components.llms.base import BaseLLMClient
 from src.common.config import Config
 from src.common.logging import logger
 

@@ -8,8 +8,8 @@ import asyncio
 from injector import inject
 
 from src.common.schemas import ChatResponse
-from src.reasoning.brains.base import BaseBrain
-from src.bot import Bot
+from src.core.brains import BrainInterface
+from src.core.bot import Bot
 from src.common.config import Config
 
 
@@ -22,7 +22,7 @@ class ChatEngine:
     def __init__(
         self,
         config: Config,
-        brain: BaseBrain,
+        brain: BrainInterface,
         bot: Bot,
     ):
         """Initialize the chat engine with a bot instance."""
