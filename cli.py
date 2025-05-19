@@ -19,7 +19,7 @@ from typing import Optional, cast
 from src.chat_engine import ChatEngine
 from src.common.config import Config
 from src.common.logging import logger
-from dependency_injector import get_instance, update_injector_with_config
+from src.config_injector import get_instance, update_injector_with_config
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -62,8 +62,7 @@ async def process_input(chat_engine: ChatEngine, user_input: str, conversation_i
         
     # Process the message
     result = await chat_engine.process_message(user_input, conversation_id)
-    return f"Bot: {result.response}\n\n{result.additional_kwargs}"
-
+    return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
 
 async def main():
     """Run the CLI application."""

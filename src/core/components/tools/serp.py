@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 
 from langchain_community.utilities import SerpAPIWrapper
 
-from src.components.tools.base import BaseTool
+from src.core.components.tools.base import BaseTool
 
 
 class CustomSearchTool(BaseTool):
@@ -28,7 +28,6 @@ class CustomSearchTool(BaseTool):
             name="web_search",
             description="Useful for when you need to answer questions about current events, date, or factual information"
         )
-        print(f"-======{api_key or os.getenv("SERPAPI_API_KEY")}")
         self._search = SerpAPIWrapper(
             params={
                 "engine": "google",

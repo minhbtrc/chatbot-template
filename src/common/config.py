@@ -64,6 +64,8 @@ class Config(BaseModel):
 
     brain_type: Optional[str] = Field(default="AGENT", description="Type of brain to use (AGENT, LLM)")
 
+    bot_type: Optional[str] = Field(default="CHAT", description="Type of bot to use (CHAT, RAG, DEEPRESEARCH)")
+
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values: Any):

@@ -1,7 +1,7 @@
-from src.components.memory.base import BaseChatbotMemory
+from src.core.components.memory.base import BaseChatbotMemory
 from src.common.config import Config
-from src.components.memory.clients.in_memory import InMemory
-from src.components.memory.clients.mongodb_memory import MongoMemory
+from src.core.components.memory.clients.in_memory import InMemory
+from src.core.components.memory.clients.mongodb_memory import MongoMemory
 
 
 def create_memory(config: Config) -> BaseChatbotMemory:

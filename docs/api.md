@@ -19,15 +19,15 @@ Authentication is currently implemented through environment variables. For produ
 
 The API can be configured through environment variables:
 
-```
+```bash
 # Core Configuration
-MODEL_TYPE=OPENAI  # Options: OPENAI, LLAMA, AZUREOPENAI
+MODEL_TYPE=AZUREOPENAI  # Options: OPENAI, LLAMA, AZUREOPENAI, VERTEX
 
 # OpenAI Configuration
 OPENAI_API_KEY=your_openai_key
 BASE_MODEL_NAME=gpt-3.5-turbo
 
-# Azure OpenAI Configuration (if using MODEL_TYPE=AZUREOPENAI)
+# Azure OpenAI Configuration
 AZURE_API_KEY=your_azure_openai_key
 AZURE_API_VERSION=2023-05-15
 AZURE_ENDPOINT=https://your-resource-name.openai.azure.com/
@@ -50,27 +50,28 @@ LOG_LEVEL=INFO
 
 #### Send a message
 
-```
-POST /api/v1/chat/message
+```http
+POST /api/v1/chat
+Content-Type: application/json
+
+{
+  "input": "Hello, how are you?",
+  "conversation_id": "optional-custom-id"
+}
 ```
 
 Sends a message to the chatbot and gets a response.
 
 **Request Body:**
-
-```json
-{
-  "message": "Hello, how are you?",
-  "conversation_id": "optional-custom-id"
-}
-```
+- `input` (string, required): The message to send
+- `conversation_id` (string, optional): ID for the conversation
 
 **Response:** `200 OK`
-
 ```json
 {
-  "response": "I'm doing well, thank you for asking! How can I assist you today?",
-  "conversation_id": "conversation-id"
+  "output": "I'm doing well, thank you for asking! How can I assist you today?",
+  "conversation_id": "conversation-id",
+  "additional_kwargs": {}
 }
 ```
 
@@ -114,8 +115,8 @@ Retrieves the conversation history for a specific conversation.
 
 #### Clear conversation history
 
-```
-DELETE /api/v1/chat/history/{conversation_id}
+```http
+POST /api/v1/clear/{conversation_id}
 ```
 
 Clears the conversation history for a specific conversation.
@@ -124,12 +125,10 @@ Clears the conversation history for a specific conversation.
 - `conversation_id` (path) - ID of the conversation to clear
 
 **Response:** `200 OK`
-
 ```json
 {
   "status": "success",
-  "message": "Conversation history cleared",
-  "conversation_id": "conversation-id"
+  "message": "History for conversation {conversation_id} cleared"
 }
 ```
 
@@ -139,50 +138,196 @@ Clears the conversation history for a specific conversation.
 
 ### Health Check
 
-#### Check API health
-
-```
+```http
 GET /api/v1/health
 ```
 
-Checks if the API is running correctly.
+Checks the health status of the API and its components.
 
 **Response:** `200 OK`
-
 ```json
 {
-  "status": "ok",
-  "version": "1.0.0"
+  "status": "healthy",
+  "components": {
+    "llm": "connected",
+    "memory": "connected",
+    "tools": "available"
+  }
 }
 ```
 
 ## Error Handling
 
-Errors are returned with appropriate HTTP status codes and a JSON body:
+The API uses a standardized error response format:
 
 ```json
 {
   "error": {
+    "type": "ErrorType",
+    "message": "Human readable error message",
     "code": "error_code",
-    "message": "Error message",
     "details": {
-      "additional": "information",
-      "request_id": "unique-request-id"
+      // Additional error details if available
     }
   }
 }
 ```
 
-### Common Error Codes
+### Common Error Types
 
-| HTTP Status | Error Code | Description |
-|-------------|------------|-------------|
-| 400 | `invalid_request` | The request was invalid |
-| 401 | `unauthorized` | Authentication error |
-| 404 | `not_found` | Resource not found |
-| 429 | `rate_limit_exceeded` | Too many requests |
-| 500 | `internal_error` | Server-side error |
-| 503 | `service_unavailable` | External service error |
+1. **ValidationError**
+   - Status: 400
+   - Occurs when request validation fails
+   - Includes field-specific validation errors
+
+2. **AuthenticationError**
+   - Status: 401
+   - Occurs when authentication fails
+   - May include retry information
+
+3. **AuthorizationError**
+   - Status: 403
+   - Occurs when user lacks required permissions
+
+4. **ResourceNotFoundError**
+   - Status: 404
+   - Occurs when requested resource doesn't exist
+
+5. **RateLimitError**
+   - Status: 429
+   - Includes `retry_after` field
+   - Occurs when rate limits are exceeded
+
+6. **LLMServiceError**
+   - Status: 503
+   - Occurs when LLM service is unavailable
+   - May include service-specific error details
+
+7. **InternalServerError**
+   - Status: 500
+   - Occurs for unexpected server errors
+   - Includes error tracking ID
+
+### Error Response Examples
+
+#### Validation Error
+```json
+{
+  "error": {
+    "type": "ValidationError",
+    "message": "Invalid input format",
+    "code": "validation_error",
+    "details": {
+      "field": "input",
+      "error": "Field cannot be empty"
+    }
+  }
+}
+```
+
+#### Rate Limit Error
+```json
+{
+  "error": {
+    "type": "RateLimitError",
+    "message": "Too many requests",
+    "code": "rate_limit_error",
+    "details": {
+      "retry_after": 60,
+      "limit": 100,
+      "remaining": 0
+    }
+  }
+}
+```
+
+#### LLM Service Error
+```json
+{
+  "error": {
+    "type": "LLMServiceError",
+    "message": "LLM service unavailable",
+    "code": "llm_service_error",
+    "details": {
+      "service": "openai",
+      "error_code": "service_unavailable",
+      "retry_after": 30
+    }
+  }
+}
+```
+
+## Logging
+
+The API includes comprehensive logging for debugging and monitoring:
+
+### Log Levels
+
+- **DEBUG**: Detailed information for debugging
+- **INFO**: General operational information
+- **WARNING**: Warning messages for potential issues
+- **ERROR**: Error messages for failed operations
+- **CRITICAL**: Critical errors requiring immediate attention
+
+### Log Format
+
+```
+%(asctime)s [%(levelname)s] %(name)s: %(message)s
+```
+
+### Log Categories
+
+1. **Request Logging**
+   - Request method and path
+   - Request headers
+   - Request body (if applicable)
+   - Response status
+   - Processing time
+
+2. **Error Logging**
+   - Error type and message
+   - Stack trace
+   - Request context
+   - Error tracking ID
+
+3. **Performance Logging**
+   - Response time
+   - Resource usage
+   - LLM call duration
+   - Memory operations
+
+4. **Security Logging**
+   - Authentication attempts
+   - Authorization failures
+   - Rate limit hits
+   - Suspicious activities
+
+## Best Practices
+
+1. **Error Handling**
+   - Always check response status codes
+   - Handle rate limits appropriately
+   - Implement retry logic for transient errors
+   - Log errors with sufficient context
+
+2. **Rate Limiting**
+   - Respect rate limits
+   - Implement exponential backoff
+   - Cache responses when appropriate
+   - Monitor usage patterns
+
+3. **Security**
+   - Use HTTPS
+   - Implement proper authentication
+   - Validate all inputs
+   - Sanitize outputs
+   - Monitor for abuse
+
+4. **Performance**
+   - Use connection pooling
+   - Implement caching
+   - Monitor response times
+   - Optimize payload sizes
 
 ## Integration Examples
 
@@ -190,15 +335,15 @@ Errors are returned with appropriate HTTP status codes and a JSON body:
 
 ```bash
 # Send a message
-curl -X POST http://localhost:8080/api/v1/chat/message \
+curl -X POST http://localhost:8080/api/v1/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "Hello, how are you?", "conversation_id": "test-conversation"}'
+  -d '{"input": "Hello, how are you?", "conversation_id": "test-conversation"}'
 
 # Get conversation history
 curl -X GET http://localhost:8080/api/v1/chat/history/test-conversation
 
 # Clear conversation history
-curl -X DELETE http://localhost:8080/api/v1/chat/history/test-conversation
+curl -X POST http://localhost:8080/api/v1/clear/test-conversation
 
 # Health check
 curl -X GET http://localhost:8080/api/v1/health
@@ -213,9 +358,9 @@ import json
 API_BASE_URL = "http://localhost:8080/api/v1"
 
 def send_message(message, conversation_id=None):
-    url = f"{API_BASE_URL}/chat/message"
+    url = f"{API_BASE_URL}/chat"
     payload = {
-        "message": message
+        "input": message
     }
     if conversation_id:
         payload["conversation_id"] = conversation_id
@@ -229,8 +374,8 @@ def get_history(conversation_id):
     return response.json()
 
 def clear_history(conversation_id):
-    url = f"{API_BASE_URL}/chat/history/{conversation_id}"
-    response = requests.delete(url)
+    url = f"{API_BASE_URL}/clear/{conversation_id}"
+    response = requests.post(url)
     return response.json()
 
 # Example usage
@@ -248,13 +393,13 @@ const API_BASE_URL = 'http://localhost:8080/api/v1';
 
 async function sendMessage(message, conversationId = null) {
   const payload = {
-    message
+    input: message
   };
   if (conversationId) {
     payload.conversation_id = conversationId;
   }
   
-  const response = await fetch(`${API_BASE_URL}/chat/message`, {
+  const response = await fetch(`${API_BASE_URL}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -271,8 +416,8 @@ async function getHistory(conversationId) {
 }
 
 async function clearHistory(conversationId) {
-  const response = await fetch(`${API_BASE_URL}/chat/history/${conversationId}`, {
-    method: 'DELETE'
+  const response = await fetch(`${API_BASE_URL}/clear/${conversationId}`, {
+    method: 'POST'
   });
   return response.json();
 }

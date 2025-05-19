@@ -6,9 +6,9 @@ from typing import Dict, Any, Optional
 from injector import inject
 
 from src.common.schemas import ChatResponse
-from src.reasoning.brains.base import BaseBrain
-from src.components.memory.base import BaseChatbotMemory
-from src.components.tools import ToolProvider
+from src.core.brains import BrainInterface
+from src.core.components import MemoryInterface, ToolProvider
+from src.common.logging import logger
 
 
 class Bot:
@@ -22,8 +22,8 @@ class Bot:
     @inject
     def __init__(
         self,
-        brain: BaseBrain,
-        memory: BaseChatbotMemory,
+        brain: BrainInterface,
+        memory: MemoryInterface,
         tool_provider: ToolProvider,
     ):
         """
@@ -37,10 +37,14 @@ class Bot:
         self.brain = brain
         self.memory = memory
         self.tool_provider = tool_provider
+        logger.info(f"Bot initialized with brain type: {type(brain).__name__} and memory type: {type(memory).__name__}")
 
         available_tools = self.tool_provider.get_tools()
         if available_tools:
+            logger.info(f"Binding {len(available_tools)} tools to brain")
             self.brain.use_tools(available_tools)
+        else:
+            logger.info("No tools available for binding")
     
     def _prepare_context(self, conversation_id: str) -> Dict[str, Any]:
         """
@@ -57,7 +61,10 @@ class Bot:
         
         history = self.memory.get_history(conversation_id)
         if history:
+            logger.debug(f"Retrieved {len(history)} messages from memory for conversation {conversation_id}")
             context["history"] = history
+        else:
+            logger.debug(f"No history found in memory for conversation {conversation_id}")
         return context
     
     def call(self, sentence: str, conversation_id: Optional[str] = None) -> ChatResponse:
@@ -71,15 +78,23 @@ class Bot:
         Returns:
             ChatResponse
         """
+        logger.info(f"Processing message for conversation {conversation_id or 'default'}")
+        
         if self.memory and conversation_id:
+            logger.debug("Preparing context with conversation history")
             context = self._prepare_context(conversation_id)
         else:
+            logger.debug("No memory or conversation_id provided, using empty context")
             context = {}
+            
         # Generate a response using the brain
+        logger.debug("Generating response using brain")
         response = self.brain.think(sentence, context)
+        logger.debug(f"Brain response generated: {response['content'][:100]}...")
         
         # Save the conversation to memory
         if self.memory and conversation_id:
+            logger.debug("Saving conversation to memory")
             self.memory.add_messages(
                 [
                     {"role": "user", "content": sentence},
@@ -87,6 +102,7 @@ class Bot:
                 ],
                 conversation_id
             )
+            logger.debug("Conversation saved to memory")
         
         # Return a structured response
         return ChatResponse(
@@ -102,11 +118,16 @@ class Bot:
         Args:
             conversation_id: ID of the conversation to reset
         """
+        logger.info(f"Resetting history for conversation {conversation_id}")
         if self.memory:
+            logger.debug("Clearing memory history")
             self.memory.clear_history(conversation_id)
+            logger.debug("Memory history cleared")
         
         # Also reset the brain state
+        logger.debug("Resetting brain state")
         self.brain.reset()
+        logger.info(f"Successfully reset history for conversation {conversation_id}")
     
     def get_info(self) -> Dict[str, Any]:
         """
@@ -136,5 +157,12 @@ class Bot:
         return info 
 
     def close(self) -> None:
-        """Close the bot."""
-        self.memory.close()
+        """Close any resources used by the bot."""
+        logger.info("Closing bot resources")
+        if hasattr(self.memory, 'close'):
+            logger.debug("Closing memory resources")
+            self.memory.close()
+        if hasattr(self.brain, 'close'):
+            logger.debug("Closing brain resources")
+            self.brain.close()
+        logger.info("Bot resources closed successfully")

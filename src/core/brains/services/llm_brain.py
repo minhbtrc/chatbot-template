@@ -9,11 +9,11 @@ from typing import Dict, Any, Optional, List
 
 from injector import inject
 
-from src.components.llms.base import BaseLLMClient
-from src.reasoning.brains.base import BaseBrain
+from src.core.components.llms.base import BaseLLMClient
+from src.core.brains.base import BaseBrain
 from src.common.config import Config
 from src.common.logging import logger
-
+from src.core.components.tools import BaseTool
 
 class LLMBrain(BaseBrain):
     """
@@ -36,7 +36,7 @@ class LLMBrain(BaseBrain):
         """
         self.config = config
         self.llm_client = llm_client
-        self.tools = []
+        self.tools: List[BaseTool] = []
         
         # Determine LLM type from config or parameter
         self.llm_type = config.model_type or "azureopenai"

@@ -1,13 +1,10 @@
 from injector import Binder, Injector, Module, singleton
 
-from src.reasoning.brains.brain_factory import create_brain
 from src.common.config import Config
-from src.components.llms import create_llm_client, BaseLLMClient
-from src.components.memory import create_memory, BaseChatbotMemory
-from src.components.tools import ToolProvider
-from src.bot import Bot
+from src.core.components import create_llm_client, LLMInterface, create_memory, MemoryInterface, ToolProvider
+from src.core.bot import Bot
 from src.chat_engine import ChatEngine
-from src.reasoning.brains.base import BaseBrain
+from src.core.brains import BrainInterface, create_brain
 # Global injector instance
 _global_injector = None
 
@@ -21,17 +18,17 @@ class ConfigurableModule(Module):
         binder.bind(Config, to=self.config)
 
         llm_client = create_llm_client(self.config)
-        binder.bind(BaseLLMClient, to=llm_client, scope=singleton)
+        binder.bind(LLMInterface, to=llm_client, scope=singleton)
 
         memory = create_memory(self.config)
-        binder.bind(BaseChatbotMemory, to=memory, scope=singleton)
+        binder.bind(MemoryInterface, to=memory, scope=singleton)
 
         # Create and bind the tool provider
         tool_provider = ToolProvider()
         binder.bind(ToolProvider, to=tool_provider, scope=singleton)
         
         brain = create_brain(self.config, llm_client, tool_provider)
-        binder.bind(BaseBrain, to=brain, scope=singleton)
+        binder.bind(BrainInterface, to=brain, scope=singleton)
 
         binder.bind(Bot, to=Bot, scope=singleton)
         binder.bind(ChatEngine, to=ChatEngine, scope=singleton)

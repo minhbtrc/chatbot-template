@@ -3,9 +3,9 @@ from typing import Optional, Dict, Any, List
 from langgraph.prebuilt import create_react_agent
 
 from src.common.config import Config
-from src.components.llms.base import BaseLLMClient
-from src.components.tools import ToolProvider
-from src.reasoning.brains.base import BaseBrain
+from src.core.components.llms.base import BaseLLMClient
+from src.core.components.tools import ToolProvider
+from src.core.brains.base import BaseBrain
 from src.common.logging import logger
 
 

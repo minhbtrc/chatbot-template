@@ -5,24 +5,24 @@ Health check API endpoints.
 from typing import Dict, Any
 from fastapi import APIRouter, Request, Depends
 
-from src.bot import Bot
+from src.chat_engine import ChatEngine
 
 
 # Create router
 router = APIRouter()
 
 
-def get_bot(request: Request) -> Bot:
+def get_chat_engine(request: Request) -> ChatEngine:
     """
-    Get the bot instance from the app state.
+    Get the chat engine instance from the app state.
     
     Args:
         request: The current request object
         
     Returns:
-        Bot instance
+        ChatEngine instance
     """
-    return request.app.state.bot
+    return request.app.state.chat_engine
 
 
 @router.get("/health")
@@ -37,12 +37,12 @@ async def health_check() -> Dict[str, str]:
 
 
 @router.get("/health/detailed")
-async def detailed_health_check(bot: Bot = Depends(get_bot)) -> Dict[str, Any]:
+async def detailed_health_check(chat_engine: ChatEngine = Depends(get_chat_engine)) -> Dict[str, Any]:
     """
     Detailed health check with component status.
     
     Args:
-        bot: Bot instance from app state
+        chat_engine: ChatEngine instance from app state
         
     Returns:
         Detailed status information

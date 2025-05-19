@@ -9,7 +9,7 @@ from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-from src.components.memory.base import BaseChatbotMemory
+from src.core.components.memory.base import BaseChatbotMemory
 from src.common.config import Config
 
 

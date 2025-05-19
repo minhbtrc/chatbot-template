@@ -5,13 +5,13 @@ Tests for the SERP tool implementation.
 import unittest
 from unittest.mock import patch, MagicMock
 
-from src.components.tools.serp import CustomSearchTool
+from src.core.components.tools.serp import CustomSearchTool
 
 
 class TestSerpTool(unittest.TestCase):
     """Test cases for the SERP tool."""
     
-    @patch('src.components.tools.serp.SerpAPIWrapper')
+    @patch('src.core.components.tools.serp.SerpAPIWrapper')
     def test_initialization(self, mock_serp):
         """Test the SerpTool initialization."""
         # Arrange
@@ -33,7 +33,7 @@ class TestSerpTool(unittest.TestCase):
             serpapi_api_key="test_key"
         )
     
-    @patch('src.components.tools.serp.SerpAPIWrapper')
+    @patch('src.core.components.tools.serp.SerpAPIWrapper')
     def test_run(self, mock_serp):
         """Test the run method."""
         # Arrange
@@ -53,7 +53,7 @@ class TestSerpTool(unittest.TestCase):
     def test_parameters_schema(self):
         """Test the parameters schema."""
         # Arrange
-        with patch('src.components.tools.serp.SerpAPIWrapper'):
+        with patch('src.core.components.tools.serp.SerpAPIWrapper'):
             tool = CustomSearchTool()
         
         # Act
