@@ -19,7 +19,7 @@ from typing import Optional, cast
 from src.chat_engine import ChatEngine
 from src.common.config import Config
 from src.common.logging import logger
-from dependency_injector import get_instance, update_injector_with_config
+from src.config_injector import get_instance, update_injector_with_config
 
 
 def create_parser() -> argparse.ArgumentParser:

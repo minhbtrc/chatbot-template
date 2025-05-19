@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 from api import create_app
 from src.common.config import Config
+from src.common.logging import logger
 
 # Load environment variables
 load_dotenv()
@@ -39,8 +40,8 @@ if __name__ == "__main__":
     # Get port from environment or config
     port = int(config.port)
     
-    print(f"Starting server on port {port}...")
-    print(f"API documentation available at http://localhost:{port}/docs")
+    logger.info(f"Starting server on port {port}...")
+    logger.info(f"API documentation available at http://localhost:{port}/docs")
     
     # Run the application with uvicorn
     uvicorn.run(app, host="0.0.0.0", port=port)
