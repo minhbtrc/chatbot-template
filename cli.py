@@ -62,8 +62,7 @@ async def process_input(chat_engine: ChatEngine, user_input: str, conversation_i
         
     # Process the message
     result = await chat_engine.process_message(user_input, conversation_id)
-    return f"Bot: {result.response}\n\n{result.additional_kwargs}"
-
+    return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
 
 async def main():
     """Run the CLI application."""

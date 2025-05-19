@@ -2,11 +2,13 @@
 Unit tests for the CLI module.
 """
 
+import asyncio
 import unittest
 from unittest.mock import patch, MagicMock
 
+from src.common.schemas import ChatResponse
+from src.chat_engine import ChatEngine
 import cli
-from core.bot import Bot
 from src.common.logging import logger
 
 
@@ -31,24 +33,28 @@ class TestCLI(unittest.TestCase):
     
     def test_process_input_exit(self):
         """Test process_input with exit command."""
-        bot = MagicMock(spec=Bot)
+        bot = MagicMock(spec=ChatEngine)
         
         with patch('sys.exit') as mock_exit:
-            cli.process_input(bot, 'exit', 'test_session')
+            asyncio.run(cli.process_input(bot, 'exit', 'test_session'))
             mock_exit.assert_called_once_with(0)
             
         with patch('sys.exit') as mock_exit:
-            cli.process_input(bot, 'quit', 'test_session')
+            asyncio.run(cli.process_input(bot, 'quit', 'test_session'))
             mock_exit.assert_called_once_with(0)
     
     def test_process_input_message(self):
         """Test process_input with a normal message."""
-        bot = MagicMock(spec=Bot)
-        bot.call.return_value = {"response": "Test response", "conversation_id": "test_session"}
+        chat_engine = MagicMock(spec=ChatEngine)
+        chat_engine.process_message.return_value = ChatResponse(
+            response="Test response",
+            conversation_id="test_session",
+            additional_kwargs={}
+        )
         
-        result = cli.process_input(bot, 'Hello', 'test_session')
+        result = asyncio.run(cli.process_input(chat_engine, 'Hello', 'test_session'))
         
-        bot.call.assert_called_once_with('Hello', 'test_session')
+        chat_engine.process_message.assert_called_once_with('Hello', 'test_session')
         self.assertEqual(result, 'Test response')
     
     def test_main_exception_handling(self):
@@ -76,7 +82,7 @@ class TestCLI(unittest.TestCase):
             mock_get_instance.return_value = bot_instance
             
             # Run the main function
-            cli.main()
+            asyncio.run(cli.main())
             
             # Verify mocks were called
             mock_parser.assert_called_once()

@@ -5,7 +5,8 @@ Tests for the base LLM client implementation.
 import unittest
 from typing import Dict, Any, List
 
-from src.components.llms.base import BaseLLMClient
+from src.core.components.tools.base import BaseTool
+from src.core.components.llms import BaseLLMClient
 
 
 class MockLLMClient(BaseLLMClient):
@@ -40,6 +41,10 @@ class MockLLMClient(BaseLLMClient):
     def close(self) -> None:
         """Mock implementation of close method."""
         self.close_called = True
+
+    def bind_tools(self, tools: List[BaseTool]) -> None:
+        """Mock implementation of bind_tools method."""
+        self.tools = tools
 
 
 class TestBaseLLMClient(unittest.TestCase):

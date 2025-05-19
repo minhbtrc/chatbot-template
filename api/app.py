@@ -4,8 +4,8 @@ from typing import cast
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
+from src.chat_engine import ChatEngine
 from src.common.config import Config
-from core.bot import Bot
 from dependency_injector import update_injector_with_config, get_instance
 from api.middleware.error_handler import add_error_handling
 from api.v1 import router as v1_router
@@ -19,9 +19,9 @@ async def lifespan(app: FastAPI):
     update_injector_with_config(config)
     
     # Create bot with the brain and memory
-    bot = cast(Bot, get_instance(Bot))
+    chat_engine = cast(ChatEngine, get_instance(ChatEngine))
     
-    app.state.bot = bot
+    app.state.chat_engine = chat_engine
     
     yield
     

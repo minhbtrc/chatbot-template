@@ -6,16 +6,16 @@ from fastapi import APIRouter, Depends, Request
 from typing import Dict, Any
 
 from api.v1.models import ChatRequest, ChatResponse
-from core.bot import Bot
+from src.chat_engine import ChatEngine
 
 
 # Create router
 router = APIRouter()
 
 
-def get_bot(request: Request) -> Bot:
+def get_chat_engine(request: Request) -> ChatEngine:
     """
-    Get the bot instance from the app state.
+    Get the chat engine instance from the app state.
     
     Args:
         request: The current request object
@@ -23,11 +23,11 @@ def get_bot(request: Request) -> Bot:
     Returns:
         Bot instance
     """
-    return request.app.state.bot
+    return request.app.state.chat_engine
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, bot: Bot = Depends(get_bot)) -> ChatResponse:
+async def chat(request: ChatRequest, chat_engine: ChatEngine = Depends(get_chat_engine)) -> ChatResponse:
     """
     Chat endpoint to process messages.
     
@@ -38,8 +38,8 @@ async def chat(request: ChatRequest, bot: Bot = Depends(get_bot)) -> ChatRespons
     Returns:
         Response from the bot
     """
-    result = bot.call(
-        sentence=request.input,
+    result = await chat_engine.process_message(
+        user_input=request.input,
         conversation_id=request.conversation_id
     )
     
@@ -52,7 +52,7 @@ async def chat(request: ChatRequest, bot: Bot = Depends(get_bot)) -> ChatRespons
 
 
 @router.post("/clear/{conversation_id}")
-async def clear_history(conversation_id: str, bot: Bot = Depends(get_bot)) -> Dict[str, Any]:
+async def clear_history(conversation_id: str, chat_engine: ChatEngine = Depends(get_chat_engine)) -> Dict[str, Any]:
     """
     Clear the conversation history for a specific conversation ID.
     
@@ -63,7 +63,7 @@ async def clear_history(conversation_id: str, bot: Bot = Depends(get_bot)) -> Di
     Returns:
         Success message
     """
-    bot.reset_history(conversation_id=conversation_id)
+    chat_engine.clear_history(conversation_id=conversation_id)
     
     return {
         "status": "success", 
