@@ -11,108 +11,99 @@ The project is organized into several key directories:
 │   ├── v1/               # Versioned APIs
 │   ├── middleware/       # API middleware components
 │   ├── app.py            # API application configuration
-│   ├── models.py         # API data models
-│   └── routes.py         # API route definitions
+│   └── __init__.py       # API initialization
 ├── src/                  # Source code
-│   ├── bot.py            # Bot implementation
-│   ├── reasoning/        # Reasoning components
-│   │   ├── brains/       # LLM-powered reasoning
-│   │   │   ├── services/ # Brain service implementations
-│   │   └── chain_manager.py # Chain manager implementation
-│   ├── components/       # Reusable components
-│   │   ├── llms/         # LLM abstraction layer
-│   │   │   ├── base.py   # Base LLM client interface
-│   │   │   └── clients/  # LLM-specific client implementations
-│   │   ├── memory/       # Conversation memory modules
-│   │   │   ├── base_memory.py # BaseChatbotMemory abstract class
-│   │   │   ├── custom_memory.py # In-memory implementation
-│   │   │   └── mongodb_memory.py # MongoDB implementation
-│   │   └── tools/        # Tools for agent capabilities
-│   │       ├── base.py   # BaseTool abstract class
-│   │       ├── serp.py   # Search tool implementation
-│   │       └── __init__.py # ToolProvider and tools initialization
-│   └── common/           # Shared utilities and models
-│       ├── objects.py    # Shared data models
-│       └── config.py     # Configuration management
-├── infrastructure/       # Infrastructure concerns
-│   ├── db/               # Database clients
-│   └── di/               # Dependency injection
-├── tests/                # Test directory
-├── docs/                 # Documentation
-├── app.py                # FastAPI application
-├── cli.py                # Command-line interface
-└── requirements.txt      # Project dependencies
+│   ├── chat_engine.py    # Chat engine implementation
+│   ├── config_injector.py # Dependency injection setup
+│   ├── core/             # Core application logic
+│   │   ├── bot.py        # Main Bot class
+│   │   ├── brains/       # Brain implementations
+│   │   └── components/   # Reusable components
+│   │       ├── llms/     # LLM client implementations
+│   │       ├── memory/   # Memory implementations
+│   │       ├── tools/    # Tool implementations
+│   │       └── README.md # Components documentation
+│   └── common/           # Shared utilities
+├── tests/               # Test directory
+├── docs/                # Documentation
+├── app.py               # FastAPI application entry point
+├── cli.py               # Command-line interface
+├── Dockerfile           # Docker configuration
+├── Makefile            # Build and development commands
+├── pyproject.toml      # Python project configuration
+└── requirements.txt    # Project dependencies
 ```
 
-## Key Files
+## Key Components
 
-### API Layer
+### API Layer (`api/`)
 
-- `api/v1/chat.py` - Chat endpoints
-- `api/v1/health.py` - Health check endpoints
-- `api/v1/__init__.py` - API initialization
-- `api/app.py` - API application configuration
-- `app.py` - FastAPI main application
+The API layer handles HTTP requests and responses using FastAPI:
 
-### Bot Implementation
+- `api/v1/` - Versioned API endpoints
+- `api/middleware/` - Custom middleware components
+- `api/app.py` - FastAPI application configuration
+- `api/__init__.py` - API initialization
 
-- `src/bot.py` - Main Bot class
+### Source Code (`src/`)
 
-### Reasoning Components
+#### Chat Engine
+- `src/chat_engine.py` - Chat engine implementation for message processing
+- `src/config_injector.py` - Dependency injection configuration
 
-- `src/reasoning/brains/base.py` - `BaseBrain` abstract class
-- `src/reasoning/brains/brain_factory.py` - Factory to create brains
-- `src/reasoning/brains/services/openai_brain.py` - OpenAI brain implementation
-- `src/reasoning/brains/services/llama_brain.py` - LlamaCpp brain implementation
-- `src/reasoning/brains/services/azure_openai_brain.py` - Azure OpenAI brain implementation
-- `src/reasoning/chain_manager.py` - Chain manager for reasoning flows
+#### Core Layer (`src/core/`)
+- `src/core/bot.py` - Main Bot class that orchestrates components
+- `src/core/brains/` - Brain implementations for different reasoning strategies
+- `src/core/components/` - Reusable components
+  - `llms/` - LLM client implementations
+  - `memory/` - Memory storage implementations
+  - `tools/` - Tool implementations
+  - `README.md` - Components documentation
 
-### Memory Modules
+#### Common Utilities (`src/common/`)
+- Shared utilities and models
+- Configuration management
+- Logging setup
 
-- `src/components/memory/base_memory.py` - `BaseChatbotMemory` abstract class
-- `src/components/memory/custom_memory.py` - In-memory implementation
-- `src/components/memory/mongodb_memory.py` - MongoDB implementation
+### Testing (`tests/`)
+- Unit tests
+- Integration tests
+- Test fixtures and utilities
 
-### LLM Clients
+### Documentation (`docs/`)
+- `api.md` - API documentation
+- `folder_structure.md` - This document
 
-- `src/components/llms/base.py` - `BaseLLMClient` abstract class
-- `src/components/llms/clients/openai_client.py` - OpenAI client
-- `src/components/llms/clients/llamacpp_client.py` - LlamaCpp client
-- `src/components/llms/clients/azure_openai_client.py` - Azure OpenAI client
-- `src/components/llms/clients/vertex_client.py` - Google Vertex AI client
+## Architecture Overview
 
-### Tools
+The application follows a layered architecture:
 
-- `src/components/tools/__init__.py` - `ToolProvider` class for centralized tool management
-- `src/components/tools/base.py` - `BaseTool` abstract class
-- `src/components/tools/serp.py` - Search tool implementation
+1. **API Layer**
+   - Handles HTTP requests/responses
+   - Input validation
+   - Error handling
+   - Middleware processing
 
-### Common Utilities
+2. **Core Layer**
+   - Bot orchestration
+   - Chat engine processing
+   - Brain implementations
+   - Component coordination
 
-- `src/common/objects.py` - Shared data models
-- `src/common/config.py` - Configuration management
+3. **Components Layer**
+   - Modular, interchangeable components
+   - LLM clients
+   - Memory implementations
+   - Tool implementations
 
-### Infrastructure
+4. **Common Layer**
+   - Shared utilities
+   - Configuration management
+   - Logging
 
-- `infrastructure/db/mongodb.py` - MongoDB client
-- `infrastructure/di/container.py` - Dependency injection container
-
-### Testing
-
-- `tests/conftest.py` - Pytest fixtures
-- `tests/bot/test_bot.py` - Bot tests
-- `tests/reasoning/test_chain_manager.py` - Chain manager tests
-- `tests/reasoning/brains/test_brain_factory.py` - Brain factory tests
-- `tests/memory/test_memory.py` - Memory tests
-
-### Documentation
-
-- `docs/architecture.md` - Architecture guide
-- `docs/extending.md` - Extension guide
-- `docs/api.md` - API documentation
-- `docs/folder_structure.md` - This document
-- `docs/improvement_suggestions.md` - Suggestions for future enhancements
-
-### Configuration
-
-- `requirements.txt` - Project dependencies
+This structure promotes:
+- Clear separation of concerns
+- Modularity and extensibility
+- Easy testing and maintenance
+- Consistent error handling
+- Comprehensive logging
