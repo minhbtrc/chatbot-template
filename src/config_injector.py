@@ -2,7 +2,15 @@ from injector import Binder, Injector, Module, singleton
 
 from src.common.config import Config
 from src.base.brains import BrainInterface, create_brain
-from src.base.components import create_llm_client, LLMInterface, create_memory, MemoryInterface, ToolProvider
+from src.base.components import (
+    create_llm_client,
+    LLMInterface,
+    create_memory,
+    MemoryInterface,
+    ToolProvider,
+    create_vector_database,
+    VectorDatabaseInterface
+)
 from src.base.bot import Bot
 from src.chat_engine import ChatEngine
 
@@ -24,6 +32,9 @@ class ConfigurableModule(Module):
 
         memory = create_memory(self.config)
         binder.bind(MemoryInterface, to=memory, scope=singleton)
+
+        vector_database = create_vector_database(self.config)
+        binder.bind(VectorDatabaseInterface, to=vector_database, scope=singleton)
 
         # Create and bind the tool provider
         tool_provider = ToolProvider()

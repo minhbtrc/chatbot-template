@@ -66,6 +66,10 @@ class Config(BaseModel):
 
     bot_type: Optional[str] = Field(default="CHAT", description="Type of bot to use (CHAT, RAG, DEEPRESEARCH)")
 
+    # Vector Database Configuration
+    vector_database_type: Optional[str] = Field(default="CHROMA", description="Type of vector database to use (CHROMA, FAISS)")
+    vector_database_path: Optional[str] = Field(default=None, description="Path to vector database")
+
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values: Any):

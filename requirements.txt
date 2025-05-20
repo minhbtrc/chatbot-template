@@ -43,3 +43,6 @@ pytest-cov>=4.1.0
 # langdetect>=1.0.9  # For language detection
 
 google-search-results==2.4.2
+
+# Vector databases
+chromadb==1.0.9
