@@ -1,10 +1,12 @@
 from injector import Binder, Injector, Module, singleton
 
 from src.common.config import Config
-from src.core.components import create_llm_client, LLMInterface, create_memory, MemoryInterface, ToolProvider
-from src.core.bot import Bot
+from src.base.brains import BrainInterface, create_brain
+from src.base.components import create_llm_client, LLMInterface, create_memory, MemoryInterface, ToolProvider
+from src.base.bot import Bot
 from src.chat_engine import ChatEngine
-from src.core.brains import BrainInterface, create_brain
+
+
 # Global injector instance
 _global_injector = None
 

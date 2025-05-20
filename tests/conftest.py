@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from api import create_app
 from src.common.config import Config
-from src.core.brains import LLMBrain
+from src.base.brains import LLMBrain
 
 
 @pytest.fixture
@@ -36,9 +36,9 @@ def mock_brain(monkeypatch):
 @pytest.fixture
 def mock_bot(mock_brain):
     """Fixture for mocked Bot."""
-    from src.core.bot import Bot
-    from src.core.components.memory import InMemory
-    from src.core.components.tools import ToolProvider
+    from src.base.bot import Bot
+    from src.base.components.memory import InMemory
+    from src.base.components.tools import ToolProvider
     
     memory = InMemory()
     tool_provider = ToolProvider()

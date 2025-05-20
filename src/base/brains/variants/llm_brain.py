@@ -9,11 +9,11 @@ from typing import Dict, Any, Optional, List
 
 from injector import inject
 
-from src.core.components.llms.base import BaseLLMClient
-from src.core.brains.base import BaseBrain
+from src.base.components.llms.base import BaseLLMClient
+from src.base.brains.base import BaseBrain
 from src.common.config import Config
 from src.common.logging import logger
-from src.core.components.tools import BaseTool
+from src.base.components.tools import BaseTool
 
 class LLMBrain(BaseBrain):
     """

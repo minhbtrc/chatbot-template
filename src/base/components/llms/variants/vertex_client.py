@@ -10,7 +10,7 @@ from injector import inject
 from langchain_google_vertexai import ChatVertexAI
 import vertexai
 
-from src.core.components.llms.base import BaseLLMClient
+from src.base.components.llms.base import BaseLLMClient
 from src.common.config import Config
 from src.common.logging import logger
 

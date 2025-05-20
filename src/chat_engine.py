@@ -8,8 +8,8 @@ import asyncio
 from injector import inject
 
 from src.common.schemas import ChatResponse
-from src.core.brains import BrainInterface
-from src.core.bot import Bot
+from src.base.brains import BrainInterface
+from src.base.bot import Bot
 from src.common.config import Config
 from src.common.logging import logger
 

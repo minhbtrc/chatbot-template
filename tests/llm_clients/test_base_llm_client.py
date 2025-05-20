@@ -5,8 +5,8 @@ Tests for the base LLM client implementation.
 import unittest
 from typing import Dict, Any, List
 
-from src.core.components.tools.base import BaseTool
-from src.core.components.llms import BaseLLMClient
+from src.base.components.tools.base import BaseTool
+from src.base.components.llms import BaseLLMClient
 
 
 class MockLLMClient(BaseLLMClient):

@@ -6,8 +6,8 @@ from typing import Dict, Any, Optional
 from injector import inject
 
 from src.common.schemas import ChatResponse
-from src.core.brains import BrainInterface
-from src.core.components import MemoryInterface, ToolProvider
+from src.base.brains import BrainInterface
+from src.base.components import MemoryInterface, ToolProvider
 from src.common.logging import logger
 
 
@@ -78,8 +78,6 @@ class Bot:
         Returns:
             ChatResponse
         """
-        logger.info(f"Processing message for conversation {conversation_id or 'default'}")
-        
         if self.memory and conversation_id:
             logger.debug("Preparing context with conversation history")
             context = self._prepare_context(conversation_id)

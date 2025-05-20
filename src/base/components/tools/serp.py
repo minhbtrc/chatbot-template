@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 
 from langchain_community.utilities import SerpAPIWrapper
 
-from src.core.components.tools.base import BaseTool
+from src.base.components.tools.base import BaseTool
 
 
 class CustomSearchTool(BaseTool):
