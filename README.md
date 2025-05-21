@@ -19,13 +19,21 @@ A modular backend framework for building AI chat applications powered by large l
 
 - Python 3.9+
 - MongoDB (for persistent memory)
+- [uv](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
 
 ### Installation
 
 1. Clone the repository
-2. Install dependencies:
+2. Install dependencies using uv:
    ```bash
-   pip install -r requirements.txt
+   # Create and activate virtual environment
+   uv venv
+   source .venv/bin/activate  # On Unix/macOS
+   # or
+   .venv\Scripts\activate  # On Windows
+
+   # Install dependencies
+   uv pip install -r requirements.txt
    ```
 3. Set up environment variables:
    ```bash
@@ -83,7 +91,6 @@ A modular backend framework for building AI chat applications powered by large l
 │   ├── reasoning/       # Reasoning components
 │   ├── components/      # Components Layer
 │   └── common/          # Shared utilities
-├── configuration/       # Configuration files
 ├── tests/              # Test directory
 └── docs/              # Documentation
 ```

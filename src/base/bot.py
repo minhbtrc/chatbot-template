@@ -162,5 +162,5 @@ class Bot:
             self.memory.close()
         if hasattr(self.brain, 'close'):
             logger.debug("Closing brain resources")
-            self.brain.close()
+            getattr(self.brain, 'close')()
         logger.info("Bot resources closed successfully")
