@@ -30,8 +30,8 @@ class MongoMemory(BaseChatbotMemory):
         """
         self.config = config
         self.client: MongoClient = self._create_client()
-        self.collection: Collection = self._get_collection()
         self.db: Database = self._get_database()
+        self.collection: Collection = self._get_collection()
         self.conversation_cache: Dict[str, List[Dict[str, str]]] = {}
 
     def _get_database(self) -> Database:
