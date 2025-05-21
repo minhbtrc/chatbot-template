@@ -7,7 +7,8 @@ def create_vector_database(config: Config) -> BaseVectorDatabase:
     """
     Create a vector database based on the type.
     """
-    if config.vector_database_type and config.vector_database_type.upper() == "CHROMA":
+    vector_database_type = config.vector_database_type.upper() if config.vector_database_type else None
+    if vector_database_type == "CHROMA":
         return ChromaVectorDatabase(config)
     else:
-        raise ValueError(f"Invalid vector database type: {config.vector_database_type}")
+        raise ValueError(f"Invalid vector database type: {vector_database_type}")

@@ -11,7 +11,9 @@ class ChromaVectorDatabase(BaseVectorDatabase):
     @inject
     def __init__(self, config: Config):
         self.config = config
-        self.client = chromadb.PersistentClient(path=config.vector_database_path or "./chroma_db")
+        if not config.vector_database_chroma_path:
+            raise ValueError("Vector database path is not set")
+        self.client = chromadb.PersistentClient(path=config.vector_database_chroma_path)
         self.collection = self.client.get_or_create_collection(name="default")
 
     def index_documents(self, documents: List[str]) -> None:

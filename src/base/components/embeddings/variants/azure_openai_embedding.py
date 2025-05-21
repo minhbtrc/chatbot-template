@@ -2,19 +2,27 @@ from typing import List
 
 from injector import inject
 from pydantic import SecretStr
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 from src.base.components.embeddings.base import BaseEmbedding
 from src.common.config import Config
 
-class OpenAIEmbedding(BaseEmbedding):
+class AzureOpenAIEmbedding(BaseEmbedding):
     @inject
     def __init__(self, config: Config):
-        if not config.openai_embedding_model:
-            raise ValueError("OpenAI embedding model is not set")
-        if not config.openai_api_key:
-            raise ValueError("OpenAI API key is not set")
-        self.embeddings = OpenAIEmbeddings(model=config.openai_embedding_model, api_key=SecretStr(config.openai_api_key))
+        if not config.azure_embedding_model_key:
+            raise ValueError("Azure embedding model key is not set")
+        if not config.azure_embedding_model_endpoint:
+            raise ValueError("Azure embedding model endpoint is not set")
+        if not config.azure_embedding_model_deployment:
+            raise ValueError("Azure embedding model deployment is not set")
+        
+        self.embeddings = AzureOpenAIEmbeddings(
+            api_key=SecretStr(config.azure_embedding_model_key),
+            azure_endpoint=config.azure_embedding_model_endpoint,
+            azure_deployment=config.azure_embedding_model_deployment,
+            api_version=config.azure_embedding_model_version,
+        )
 
     def process(self, text: str) -> List[float]:
         return self.embeddings.embed_query(text)

@@ -66,13 +66,16 @@ class Config(BaseModel):
     vector_database_chroma_path: Optional[str] = Field(default="./chroma_db", description="Path to Chroma vector database")
 
     # Embedding Configuration
-    embedding_type: Optional[str] = Field(default="OPENAI", description="Type of embedding to use (OPENAI, AZUREOPENAI)")
+    embedding_type: Optional[str] = Field(default="AZUREOPENAI", description="Type of embedding to use (OPENAI, AZUREOPENAI)")
 
     ## Embedding-OpenAI Configuration
     openai_embedding_model: Optional[str] = Field(default="text-embedding-3-small", description="OpenAI embedding model to use")
 
     ## Embedding-AzureOpenAI Configuration
-    azure_embedding_model: Optional[str] = Field(default="text-embedding-3-small", description="Azure OpenAI embedding model to use")
+    azure_embedding_model_deployment: Optional[str] = Field(default=None, description="Azure OpenAI embedding model deployment")
+    azure_embedding_model_endpoint: Optional[str] = Field(default=None, description="Azure OpenAI embedding model endpoint")
+    azure_embedding_model_key: Optional[str] = Field(default=None, description="Azure OpenAI embedding model key")
+    azure_embedding_model_version: Optional[str] = Field(default=None, description="Azure OpenAI embedding model version")
 
     # Tracing Configuration
     enable_langfuse: Optional[bool] = Field(default=True, description="Enable trading with LLM")
