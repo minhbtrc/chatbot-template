@@ -2,8 +2,7 @@
 MongoDB memory implementation.
 """
 
-from typing import Dict, List, Set
-import datetime
+from typing import Dict, List, Set, Any
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
@@ -62,7 +61,7 @@ class MongoMemory(BaseChatbotMemory):
         """
         return self.db[self.config.mongo_collection]
     
-    def add_message(self, role: str, content: str, conversation_id: str) -> None:
+    def _add_message(self, message: Dict[str, Any]) -> None:
         """
         Add a message to the conversation history.
         
@@ -71,20 +70,12 @@ class MongoMemory(BaseChatbotMemory):
             content: Content of the message
             conversation_id: ID of the conversation
         """
-        # Create the message document
-        message = {
-            "role": role,
-            "content": content,
-            "conversation_id": conversation_id,
-            "timestamp": datetime.datetime.now()
-        }
-        
         # Insert the message into the database
         self.collection.insert_one(message)
         
         # Clear the cache for this conversation
-        if conversation_id in self.conversation_cache:
-            del self.conversation_cache[conversation_id]
+        if message["conversation_id"] in self.conversation_cache:
+            del self.conversation_cache[message["conversation_id"]]
     
     def get_history(self, conversation_id: str) -> List[Dict[str, str]]:
         """

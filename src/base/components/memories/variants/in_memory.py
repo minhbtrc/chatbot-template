@@ -2,7 +2,7 @@
 Custom in-memory implementation for chat history.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from src.base.components.memories.base import BaseChatbotMemory
 
@@ -16,9 +16,9 @@ class InMemory(BaseChatbotMemory):
     
     def __init__(self):
         """Initialize the memory."""
-        self.memory: Dict[str, List[Dict[str, str]]] = {}
+        self.memory: Dict[str, List[Dict[str, Any]]] = {}
     
-    def add_message(self, role: str, content: str, conversation_id: str) -> None:
+    def _add_message(self, message: Dict[str, Any]) -> None:
         """
         Add a message to the conversation history.
         
@@ -27,10 +27,10 @@ class InMemory(BaseChatbotMemory):
             content: Content of the message
             conversation_id: ID of the conversation
         """
-        if conversation_id not in self.memory:
-            self.memory[conversation_id] = []
+        if message["conversation_id"] not in self.memory:
+            self.memory[message["conversation_id"]] = []
         
-        self.memory[conversation_id].append({"role": role, "content": content})
+        self.memory[message["conversation_id"]].append(message)
     
     def get_history(self, conversation_id: str) -> List[Dict[str, str]]:
         """

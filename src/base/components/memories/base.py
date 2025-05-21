@@ -3,7 +3,8 @@ Base memory interface for storing conversation history.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List
+import datetime
+from typing import Dict, List, Any
 
 
 class BaseChatbotMemory(ABC):
@@ -15,6 +16,12 @@ class BaseChatbotMemory(ABC):
     """
     
     @abstractmethod
+    def _add_message(self, message: Dict[str, Any]) -> None:
+        """
+        Add a message to the conversation history.
+        """
+        pass
+    
     def add_message(self, role: str, content: str, conversation_id: str) -> None:
         """
         Add a message to the conversation history.
@@ -24,7 +31,13 @@ class BaseChatbotMemory(ABC):
             content: Content of the message
             conversation_id: ID of the conversation
         """
-        pass
+        message = {
+            "role": role,
+            "content": content,
+            "conversation_id": conversation_id,
+            "timestamp": datetime.datetime.now()
+        }
+        self._add_message(message)
 
     def add_messages(self, messages: List[Dict[str, str]], conversation_id: str) -> None:
         """

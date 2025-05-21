@@ -35,11 +35,11 @@ class ConfigurableModule(Module):
         memory = create_memory(self.config)
         binder.bind(MemoryInterface, to=memory, scope=singleton)
 
-        vector_database = create_vector_database(self.config)
-        binder.bind(VectorDatabaseInterface, to=vector_database, scope=singleton)
-
         embedding = create_embedding(self.config)
         binder.bind(EmbeddingInterface, to=embedding, scope=singleton)
+
+        vector_database = create_vector_database(self.config, embedding)
+        binder.bind(VectorDatabaseInterface, to=vector_database, scope=singleton)
 
         # Create and bind the tool provider
         tool_provider = ToolProvider()
