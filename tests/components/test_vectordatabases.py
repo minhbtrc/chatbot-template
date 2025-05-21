@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 from src.common.config import Config
 from src.base.components.vector_databases import create_vector_database
 from src.base.components.vector_databases.variants.chromadb import ChromaVectorDatabase
+from src.base.components.embeddings.base import BaseEmbedding as EmbeddingsInterface
 
 
 class TestVectorDatabases(unittest.TestCase):
@@ -12,20 +13,21 @@ class TestVectorDatabases(unittest.TestCase):
         self.mock_config = Config()
         self.mock_config.vector_database_type = "chroma"
         self.mock_config.vector_database_chroma_path = "/tmp/test_chroma"
+        self.mock_embeddings = MagicMock(spec=EmbeddingsInterface)
 
     @patch('chromadb.PersistentClient')
     def test_create_vector_database_chroma(self, mock_client: MagicMock) -> None:
         mock_collection = MagicMock()
         mock_client.return_value.get_or_create_collection.return_value = mock_collection
         
-        vector_database = create_vector_database(self.mock_config)
+        vector_database = create_vector_database(self.mock_config, self.mock_embeddings)
         assert isinstance(vector_database, ChromaVectorDatabase)
     
     def test_create_vector_database_invalid_type(self) -> None:
         config = Config()
         config.vector_database_type = "invalid"
         with self.assertRaises(ValueError):
-            create_vector_database(config)
+            create_vector_database(config, self.mock_embeddings)
 
     @patch('chromadb.PersistentClient')
     def test_retrieve_context_return_type(self, mock_client: MagicMock) -> None:
@@ -35,7 +37,7 @@ class TestVectorDatabases(unittest.TestCase):
         }
         mock_client.return_value.get_or_create_collection.return_value = mock_collection
         
-        vector_database = create_vector_database(self.mock_config)
+        vector_database = create_vector_database(self.mock_config, self.mock_embeddings)
         
         # First index some documents
         documents = ["test document 1", "test document 2"]
@@ -51,7 +53,7 @@ class TestVectorDatabases(unittest.TestCase):
         mock_collection = MagicMock()
         mock_client.return_value.get_or_create_collection.return_value = mock_collection
         
-        vector_database = create_vector_database(self.mock_config)
+        vector_database = create_vector_database(self.mock_config, self.mock_embeddings)
         
         # Test index_documents (should return None)
         documents = ["test document 1", "test document 2"]
@@ -63,7 +65,7 @@ class TestVectorDatabases(unittest.TestCase):
         mock_collection = MagicMock()
         mock_client.return_value.get_or_create_collection.return_value = mock_collection
         
-        vector_database = create_vector_database(self.mock_config)
+        vector_database = create_vector_database(self.mock_config, self.mock_embeddings)
         
         # First index a document
         documents = ["test document to delete"]
