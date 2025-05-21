@@ -6,6 +6,8 @@ from .tools import BaseTool as ToolInterface
 from .tools import ToolProvider
 from .vector_databases import BaseVectorDatabase as VectorDatabaseInterface
 from .vector_databases import create_vector_database
+from .embeddings import BaseEmbedding as EmbeddingInterface
+from .embeddings import create_embedding
 
 __all__ = [
     "LLMInterface",
@@ -16,4 +18,6 @@ __all__ = [
     "ToolProvider",
     "VectorDatabaseInterface",
     "create_vector_database",
+    "EmbeddingInterface",
+    "create_embedding",
 ]

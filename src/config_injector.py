@@ -9,7 +9,9 @@ from src.base.components import (
     MemoryInterface,
     ToolProvider,
     create_vector_database,
-    VectorDatabaseInterface
+    VectorDatabaseInterface,
+    EmbeddingInterface,
+    create_embedding
 )
 from src.base.bot import Bot
 from src.chat_engine import ChatEngine
@@ -35,6 +37,9 @@ class ConfigurableModule(Module):
 
         vector_database = create_vector_database(self.config)
         binder.bind(VectorDatabaseInterface, to=vector_database, scope=singleton)
+
+        embedding = create_embedding(self.config)
+        binder.bind(EmbeddingInterface, to=embedding, scope=singleton)
 
         # Create and bind the tool provider
         tool_provider = ToolProvider()
