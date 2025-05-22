@@ -12,12 +12,13 @@ A modular backend framework for building AI chat applications powered by large l
 - 🚀 **FastAPI Integration**: Modern, async API with automatic documentation
 - 🔌 **Dependency Injection**: Clean component management and configuration
 - 🧪 **Testing Support**: Built-in testing infrastructure
+- 📚 **RAG Support**: Built-in support for Retrieval-Augmented Generation with document processing and vector storage
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.12+
 - MongoDB (for persistent memory)
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
 
@@ -44,10 +45,27 @@ A modular backend framework for building AI chat applications powered by large l
    OPENAI_API_KEY=your_openai_key
    BASE_MODEL_NAME=gpt-3.5-turbo
    
+   # Azure OpenAI Configuration (if using Azure)
+   AZURE_CHAT_MODEL_KEY=your_azure_key
+   AZURE_CHAT_MODEL_VERSION=2024-02-15-preview
+   AZURE_CHAT_MODEL_ENDPOINT=your_endpoint
+   AZURE_CHAT_MODEL_DEPLOYMENT=your_deployment
+   
    # MongoDB Configuration
    MONGO_URI=mongodb://localhost:27017/chatbot
    MONGO_DATABASE=langchain_bot
    MONGO_COLLECTION=chatbot
+   
+   # Vector Database Configuration
+   VECTOR_DATABASE_TYPE=CHROMA
+   VECTOR_DATABASE_CHROMA_PATH=./chroma_db
+   
+   # Embedding Configuration
+   EMBEDDING_TYPE=AZUREOPENAI
+   AZURE_EMBEDDING_MODEL_KEY=your_azure_key
+   AZURE_EMBEDDING_MODEL_ENDPOINT=your_endpoint
+   AZURE_EMBEDDING_MODEL_DEPLOYMENT=your_deployment
+   AZURE_EMBEDDING_MODEL_VERSION=2024-02-15-preview
    
    # Server Configuration
    PORT=8080
@@ -65,12 +83,33 @@ A modular backend framework for building AI chat applications powered by large l
 
 2. Use the CLI for testing:
    ```bash
-   # Basic usage
+   # Basic chat usage
    python cli.py
    
    # Specify a model type
    python cli.py --model llama
+   
+   # Use RAG bot with document processing
+   python rag_cli.py --document path/to/your/document.pdf
    ```
+
+### Using the RAG Bot
+
+The RAG (Retrieval-Augmented Generation) bot allows you to:
+1. Process and index documents
+2. Ask questions about the processed documents
+3. Get context-aware responses
+
+```bash
+# Process a document
+python rag_cli.py --document path/to/your/document.pdf
+
+# Start an interactive session
+python rag_cli.py --model OPENAI
+
+# Use a specific conversation ID
+python rag_cli.py --conversation-id my_conversation
+```
 
 ## Documentation
 
@@ -88,11 +127,33 @@ A modular backend framework for building AI chat applications powered by large l
 ├── src/                  # Source code
 │   ├── bot.py           # Main Bot class
 │   ├── chat_engine.py   # Chat engine implementation
-│   ├── reasoning/       # Reasoning components
+│   ├── experts/         # Expert implementations (RAG, etc.)
 │   ├── components/      # Components Layer
 │   └── common/          # Shared utilities
 ├── tests/              # Test directory
 └── docs/              # Documentation
+```
+
+## Development
+
+### Code Quality
+
+```bash
+# Run linting
+flake8 .
+
+# Clean up build files
+make clean
+```
+
+### Docker Support
+
+```bash
+# Build Docker image
+make docker-build
+
+# Run Docker container
+make docker-run
 ```
 
 ## Contributing
