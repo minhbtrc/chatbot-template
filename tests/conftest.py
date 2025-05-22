@@ -38,7 +38,7 @@ def mock_bot(mock_brain):
     """Fixture for mocked Bot."""
     from src.base.bot import Bot
     from src.base.components.memories import InMemory
-    from src.base.components.tools import ToolProvider
+    from src.base.components import ToolProvider
     
     memory = InMemory()
     tool_provider = ToolProvider()

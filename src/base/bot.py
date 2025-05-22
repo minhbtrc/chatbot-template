@@ -109,6 +109,44 @@ class Bot:
             additional_kwargs=response["additional_kwargs"]
         )
     
+    async def acall(self, sentence: str, conversation_id: Optional[str] = None) -> ChatResponse:
+        """
+        Process a user message and generate a response.
+        
+        Args:
+            sentence: User input
+        """
+        if self.memory and conversation_id:
+            logger.debug("Preparing context with conversation history")
+            context = self._prepare_context(conversation_id)
+        else:
+            logger.debug("No memory or conversation_id provided, using empty context")
+            context = {}
+            
+        # Generate a response using the brain
+        logger.debug("Generating response using brain")
+        response = await self.brain.athink(sentence, context)
+        logger.debug(f"Brain response generated: {response['content'][:100]}...")
+        
+        # Save the conversation to memory
+        if self.memory and conversation_id:
+            logger.debug("Saving conversation to memory")
+            self.memory.add_messages(
+                [
+                    {"role": "user", "content": sentence},  
+                    {"role": "assistant", "content": response["content"]}
+                ],
+                conversation_id
+            )
+            logger.debug("Conversation saved to memory")
+        
+        # Return a structured response
+        return ChatResponse(
+            response=response["content"],
+            conversation_id=conversation_id or "default",
+            additional_kwargs=response["additional_kwargs"]
+        )
+
     def reset_history(self, conversation_id: str) -> None:
         """
         Reset the conversation history.

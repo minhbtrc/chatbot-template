@@ -11,3 +11,6 @@ wheels/
 
 # Environment variables
 .env
+
+*.pdf
+chroma_db/

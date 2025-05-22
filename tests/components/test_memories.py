@@ -2,9 +2,7 @@ import unittest
 from typing import Dict, List
 
 from src.common.config import Config
-from src.base.components.memories import create_memory
-from src.base.components.memories.variants.in_memory import InMemory
-from src.base.components.memories.variants.mongodb_memory import MongoMemory
+from src.base.components.memories import create_memory, InMemory, MongoMemory
 
 
 class TestMemories(unittest.TestCase):

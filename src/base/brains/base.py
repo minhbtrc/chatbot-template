@@ -30,6 +30,13 @@ class BaseBrain(ABC):
             Response text
         """
         pass
+
+    @abstractmethod
+    async def athink(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Process the input query and return a response.
+        """
+        pass
     
     @abstractmethod
     def reset(self) -> None:

@@ -9,11 +9,12 @@ from typing import Dict, Any, Optional, List
 
 from injector import inject
 
-from src.base.components.llms.base import BaseLLMClient
+from src.base.components import LLMInterface
 from src.base.brains.base import BaseBrain
 from src.common.config import Config
 from src.common.logging import logger
 from src.base.components.tools import BaseTool
+
 
 class LLMBrain(BaseBrain):
     """
@@ -25,7 +26,7 @@ class LLMBrain(BaseBrain):
     def __init__(
         self,
         config: Config,
-        llm_client: BaseLLMClient,
+        llm_client: LLMInterface,
     ):
         """
         Initialize the LLM brain.
@@ -82,6 +83,43 @@ class LLMBrain(BaseBrain):
         
         # Call the LLM client
         response = self.llm_client.chat(messages, **kwargs)
+        
+        return response
+    
+    async def athink(self, query: str, context: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Process the query using the configured LLM and return a response.
+        """
+        # If no context is provided, initialize it
+        context = context or {}
+        
+        # Extract conversation history if available
+        history = context.get("history", [])
+        
+        # Build messages for the chat
+        messages: List[Dict[str, Any]] = []
+        
+        # Add system message if configuration has one
+        if hasattr(self.config, "system_message") and self.config.system_message:
+            messages.append({
+                "role": "system",
+                "content": self.config.system_message
+            })
+        
+        # Add conversation history
+        messages.extend(history)
+        
+        # Add the current query
+        messages.append({
+            "role": "user",
+            "content": query
+        })
+        
+        # Log the messages being sent
+        logger.debug(f"Sending messages to {self.llm_type}: {messages}")
+        
+        # Call the LLM client
+        response = await self.llm_client.achat(messages, **kwargs)
         
         return response
     

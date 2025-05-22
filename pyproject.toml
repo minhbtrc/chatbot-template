@@ -3,11 +3,15 @@ name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "chromadb>=1.0.9",
+    "injector>=0.22.0",
+    "langchain-chroma>=0.2.4",
+    "langchain-experimental>=0.3.4",
     "langchain-google-vertexai>=2.0.23",
     "langgraph>=0.4.5",
     "langserve>=0.3.1",
+    "pypdf>=5.5.0",
     "vertexai>=1.43.0",
 ]
