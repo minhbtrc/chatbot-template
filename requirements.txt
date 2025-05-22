@@ -1,8 +1,10 @@
 # Core dependencies
 langchain==0.3.25
 langchain-community==0.3.24
-langchain-core==0.3.59
-langchain-openai==0.3.16
+langchain-core==0.3.60
+langchain-openai==0.3.17
+langchain-experimental==0.3.4
+langchain-chroma==0.2.4
 langfuse==2.60.5
 langgraph==0.4.5
 pydantic>=2.6.0
@@ -30,7 +32,7 @@ httpx>=0.24.1  # For async HTTP requests
 tenacity>=8.2.2  # For retries
 
 # Dependency injection
-injector>=0.23.0
+injector>=0.22.0
 
 # Testing
 pytest>=7.3.1
@@ -43,3 +45,9 @@ pytest-cov>=4.1.0
 # langdetect>=1.0.9  # For language detection
 
 google-search-results==2.4.2
+
+# Vector databases
+chromadb==1.0.9
+pypdf==5.5.0
+
+git+https://github.com/HMH-Labs/intelligent-document-chunking

@@ -2,29 +2,17 @@
 Chat API endpoints.
 """
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from typing import Dict, Any
 
 from api.v1.models import ChatRequest, ChatResponse
+from api.v1.utils import get_chat_engine
 from src.chat_engine import ChatEngine
 from src.common.logging import logger
 
 
 # Create router
 router = APIRouter()
-
-
-def get_chat_engine(request: Request) -> ChatEngine:
-    """
-    Get the chat engine instance from the app state.
-    
-    Args:
-        request: The current request object
-        
-    Returns:
-        Bot instance
-    """
-    return request.app.state.chat_engine
 
 
 @router.post("/chat", response_model=ChatResponse)

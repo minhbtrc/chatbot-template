@@ -5,7 +5,7 @@ Tests for the base tool implementation.
 import unittest
 from typing import Dict
 
-from src.core.components.tools import SimpleTool
+from src.base.components.tools import SimpleTool
 
 
 class TestBaseTool(unittest.TestCase):

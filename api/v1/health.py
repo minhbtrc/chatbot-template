@@ -3,26 +3,14 @@ Health check API endpoints.
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Depends
 
+from api.v1.utils import get_chat_engine
 from src.chat_engine import ChatEngine
 
 
 # Create router
 router = APIRouter()
-
-
-def get_chat_engine(request: Request) -> ChatEngine:
-    """
-    Get the chat engine instance from the app state.
-    
-    Args:
-        request: The current request object
-        
-    Returns:
-        ChatEngine instance
-    """
-    return request.app.state.chat_engine
 
 
 @router.get("/health")
