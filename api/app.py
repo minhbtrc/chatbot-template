@@ -4,12 +4,13 @@ from typing import cast
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
+from src.experts.rag_bot.expert import RAGBotExpert
 from src.chat_engine import ChatEngine
 from src.common.config import Config
+from src.common.logging import logger
 from src.config_injector import update_injector_with_config, get_instance
 from api.middleware.error_handler import add_error_handling
 from api.v1 import router as v1_router
-from src.common.logging import logger
 
 
 @asynccontextmanager
@@ -30,6 +31,12 @@ async def lifespan(app: FastAPI):
         logger.info("Chat engine initialized successfully")
         
         app.state.chat_engine = chat_engine
+
+        rag_bot = cast(RAGBotExpert, get_instance(RAGBotExpert))
+        logger.info("RAG bot initialized successfully")
+
+        app.state.rag_bot = rag_bot
+
         logger.info("Application startup complete")
         
         yield

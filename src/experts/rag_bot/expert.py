@@ -6,12 +6,14 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_experimental.text_splitter import SemanticChunker
 
 from src.common.config import Config
+from src.common.schemas import ChatResponse
 from src.base.components import VectorDatabaseInterface, EmbeddingInterface
 from src.base.bot import Bot
 from src.experts.rag_bot.prompts import RAG_PROMPT
+from src.experts.base import BaseExpert
 
 
-class RAGBotExpert:
+class RAGBotExpert(BaseExpert):
     """
     RAGBotExpert is a class that implements the RAGBotExpert interface.
     """
@@ -68,7 +70,7 @@ class RAGBotExpert:
         context_chunks = self.retrieve_context(query, max_chunks)
         return RAG_PROMPT.format(context="".join(f'- {chunk}\n' for chunk in context_chunks), query=query)
 
-    def process(self, query: str, conversation_id: str):
+    def process(self, query: str, conversation_id: str) -> ChatResponse:
         """
         Handles a query using synchronous bot processing.
         """
@@ -76,10 +78,16 @@ class RAGBotExpert:
         response = self.bot.call(context, conversation_id)
         return response
 
-    async def aprocess(self, query: str, conversation_id: str):
-        """
+    async def aprocess(self, query: str, conversation_id: str) -> ChatResponse:
+        """w
         Handles a query using asynchronous bot processing.
         """
         context = self._prepare_context(query)
         response = await self.bot.acall(context, conversation_id)
         return response
+
+    def clear_history(self, conversation_id: str) -> None:
+        """
+        Clears the conversation history for a specific conversation.
+        """
+        self.bot.reset_history(conversation_id)
