@@ -25,17 +25,20 @@ class InMemoryVectorDatabase(BaseVectorDatabase):
         logger.info(f"Retrieving context for query: {query}")
         logger.info(f"Metadata: {metadata}")
         retriever = self.vector_store.as_retriever(
-            search_kwargs={"k": n_results, "filter": self.make_metadata_filter(metadata)}
+            search_kwargs={"k": n_results}
         )
-        return [doc.page_content for doc in retriever.invoke(query)]
+        return [doc.page_content for doc in retriever.invoke(query, filter=metadata)]
     
     async def _aretrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
         logger.info(f"Retrieving context for query: {query}")
         logger.info(f"Metadata: {metadata}")
         retriever = self.vector_store.as_retriever(
-            search_kwargs={"k": n_results, "filter": self.make_metadata_filter(metadata)}
+            search_kwargs={"k": n_results}
         )
-        results = await retriever.ainvoke(query)
+        results = await retriever.ainvoke(query, filter=metadata)
         logger.info(f"Results: {results}")
         return [doc.page_content for doc in results]
+    
+    def delete_document(self, document: str) -> None:
+        self.vector_store.delete(document)
 

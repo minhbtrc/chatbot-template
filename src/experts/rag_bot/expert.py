@@ -149,18 +149,18 @@ class RAGBotExpert(BaseExpert):
         """
         return await self.vector_database.aretrieve_context(query, max_chunks, metadata)
 
-    def _prepare_context(self, query: str, max_chunks: int = 10) -> str:
+    def _prepare_context(self, query: str, user_id: str, max_chunks: int = 10) -> str:
         """
         Prepares context string by appending the query to retrieved documents.
         """
-        context_chunks = self.retrieve_context(query, max_chunks)
+        context_chunks = self.retrieve_context(query, max_chunks, metadata={"user_id": user_id})
         return RAG_PROMPT.format(context="".join(f'- {chunk}\n' for chunk in context_chunks))
     
-    async def _aprepare_context(self, query: str, max_chunks: int = 10) -> str:
+    async def _aprepare_context(self, query: str, user_id: str, max_chunks: int = 10) -> str:
         """
         Asynchronous version of `_prepare_context`.
         """
-        context_chunks = await self.aretrieve_context(query, max_chunks)
+        context_chunks = await self.aretrieve_context(query, max_chunks, metadata={"user_id": user_id})
         return RAG_PROMPT.format(context="".join(f'- {chunk}\n' for chunk in context_chunks), query=query)
     
     def _prepare_history(self, sentence: str, conversation_id: str, user_id: str) -> List[Dict[str, str]]:
@@ -173,37 +173,37 @@ class RAGBotExpert(BaseExpert):
             return []
         return history
     
-    def call(self, query: str, user_id: str, conversation_id: str, max_chunks: int = 10) -> ChatResponse:
+    def process(self, query: str, conversation_id: str, user_id: str, max_chunks: int = 10) -> ChatResponse:
         """
         Handles a query using synchronous bot processing.
         """
         history = self._prepare_history(query, conversation_id, user_id)
-        context = self._prepare_context(query, max_chunks)
+        context = self._prepare_context(query, user_id, max_chunks)
         logger.info("Start brain call")
         response = self.brain.think(history, context)
         logger.info("End brain call")
 
-        self.memory.add_message(role="assistant", content=response["response"], conversation_id=conversation_id)
+        self.memory.add_message(role="assistant", content=response["content"], conversation_id=conversation_id)
         return ChatResponse(
-            response=response["response"],
+            response=response["content"],
             conversation_id=conversation_id,
             session_id=user_id,
             additional_kwargs=response["additional_kwargs"]
         )
     
-    async def acall(self, query: str, user_id: str, conversation_id: str, max_chunks: int = 10) -> ChatResponse:
+    async def aprocess(self, query: str, conversation_id: str, user_id: str, max_chunks: int = 10) -> ChatResponse:
         """
         Handles a query using asynchronous bot processing.
         """
         history = self._prepare_history(query, conversation_id, user_id)
-        context = self._prepare_context(query, max_chunks)
+        context = await self._aprepare_context(query, user_id, max_chunks)
         logger.info("Start brain call")
         response = await self.brain.athink(history, context)
         logger.info("End brain call")
 
-        self.memory.add_message(role="assistant", content=response["response"], conversation_id=conversation_id)
+        self.memory.add_message(role="assistant", content=response["content"], conversation_id=conversation_id)
         return ChatResponse(
-            response=response["response"],
+            response=response["content"],
             conversation_id=conversation_id,
             session_id=user_id,
             additional_kwargs=response["additional_kwargs"]
@@ -222,7 +222,7 @@ class RAGBotExpert(BaseExpert):
             Chunks of the response content
         """
         history = self._prepare_history(sentence, conversation_id, user_id)
-        context = self._prepare_context(sentence)
+        context = self._prepare_context(sentence, user_id)
         yield from self.brain.stream_think(history, context)
 
     async def astream_call(self, sentence: str, conversation_id: str, user_id: str) -> AsyncGenerator[str, None]:
@@ -238,7 +238,7 @@ class RAGBotExpert(BaseExpert):
             Chunks of the response content
         """
         history = self._prepare_history(sentence, conversation_id, user_id)
-        context = self._prepare_context(sentence)
+        context = await self._aprepare_context(sentence, user_id)
         async for chunk in self.brain.astream_think(history, context):
             yield chunk
 

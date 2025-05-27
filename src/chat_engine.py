@@ -34,7 +34,7 @@ class ChatEngine:
         self.brain = brain        
         self.qna_expert = qna_expert
         self.rag_bot_expert = rag_bot_expert
-        self.current_expert = self.qna_expert if config.expert_type == "QNA" else self.rag_bot_expert
+        self.current_expert = self.rag_bot_expert if config.expert_type == "RAG" else self.qna_expert
         logger.info(f"ChatEngine initialized with expert type: {config.expert_type}")
         logger.info(f"Expert class: {type(self.current_expert).__name__}")
     

@@ -84,7 +84,7 @@ class QnaExpert(BaseExpert):
         """
         return QNA_SYSTEM_PROMPT
     
-    def call(self, sentence: str, conversation_id: str) -> ChatResponse:
+    def process(self, query: str, conversation_id: str, user_id: str) -> ChatResponse:
         """
         Process a user message and generate a response.
         
@@ -95,8 +95,8 @@ class QnaExpert(BaseExpert):
         Returns:
             ChatResponse
         """
-        history = self._prepare_history(sentence, conversation_id)
-        context = self._prepare_context(sentence, conversation_id)
+        history = self._prepare_history(query, conversation_id)
+        context = self._prepare_context(query, conversation_id)
             
         # Generate a response using the brain
         logger.debug("Generating response using brain")
@@ -105,15 +105,10 @@ class QnaExpert(BaseExpert):
         
         # Save the conversation to memory
         logger.debug("Saving conversation to memory")
-        self.memory.add_messages(
-            [
-                {"role": "user", "content": sentence},
-                {"role": "assistant", "content": response["content"]}
-            ],
-            conversation_id
+        self.memory.add_message(
+            role="assistant", content=response["content"], conversation_id=conversation_id
         )
         logger.debug("Conversation saved to memory")
-        
         # Return a structured response
         return ChatResponse(
             response=response["content"],
@@ -156,15 +151,15 @@ class QnaExpert(BaseExpert):
         )
         logger.debug("Conversation saved to memory")
 
-    async def acall(self, sentence: str, conversation_id: str, user_id: str) -> ChatResponse:
+    async def aprocess(self, query: str, conversation_id: str, user_id: str) -> ChatResponse:
         """
         Process a user message and generate a response.
         
         Args:
             sentence: User input
         """
-        history = self._prepare_history(sentence, conversation_id)
-        context = self._prepare_context(sentence, conversation_id)
+        history = self._prepare_history(query, conversation_id)
+        context = self._prepare_context(query, conversation_id)
             
         # Generate a response using the brain
         logger.debug("Generating response using brain")
@@ -173,12 +168,8 @@ class QnaExpert(BaseExpert):
         
         # Save the conversation to memory
         logger.debug("Saving conversation to memory")
-        self.memory.add_messages(
-            [
-                {"role": "user", "content": sentence},  
-                {"role": "assistant", "content": response["content"]}
-            ],
-            conversation_id
+        self.memory.add_message(
+            role="assistant", content=response["content"], conversation_id=conversation_id
         )
         logger.debug("Conversation saved to memory")
         
