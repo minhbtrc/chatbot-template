@@ -5,7 +5,7 @@ This module provides a LLM brain implementation that can switch between
 different LLM providers based on configuration.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Generator, AsyncGenerator
 
 from injector import inject
 
@@ -42,7 +42,27 @@ class LLMBrain(BaseBrain):
         # Determine LLM type from config or parameter
         self.llm_type = config.model_type or "azureopenai"
     
-    def think(self, query: str, context: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+    def _build_messages(
+        self,
+        history: List[Dict[str, Any]],
+        system_message: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """ Build messages for the chat """
+        messages: List[Dict[str, Any]] = []
+        
+        # Add system message if configuration has one
+        if system_message:
+            messages.append({
+                "role": "system",
+                "content": system_message
+            })
+        
+        # Add conversation history
+        messages.extend(history)
+        
+        return messages
+    
+    def think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
         """
         Process the query using the configured LLM and return a response.
         
@@ -53,75 +73,83 @@ class LLMBrain(BaseBrain):
         Returns:
             Response from the LLM
         """
-        # If no context is provided, initialize it
-        context = context or {}
-        
-        # Extract conversation history if available
-        history = context.get("history", [])
-        
-        # Build messages for the chat
-        messages: List[Dict[str, Any]] = []
-        
-        # Add system message if configuration has one
-        if hasattr(self.config, "system_message") and self.config.system_message:
-            messages.append({
-                "role": "system",
-                "content": self.config.system_message
-            })
-        
-        # Add conversation history
-        messages.extend(history)
-        
-        # Add the current query
-        messages.append({
-            "role": "user",
-            "content": query
-        })
+        messages = self._build_messages(history, system_message)
         
         # Log the messages being sent
         logger.debug(f"Sending messages to {self.llm_type}: {messages}")
         
         # Call the LLM client
-        response = self.llm_client.chat(messages, **kwargs)
+        response = self.llm_client.chat(messages)
         
         return response
     
-    async def athink(self, query: str, context: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+    async def athink(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
         """
         Process the query using the configured LLM and return a response.
         """
-        # If no context is provided, initialize it
-        context = context or {}
-        
-        # Extract conversation history if available
-        history = context.get("history", [])
-        
-        # Build messages for the chat
-        messages: List[Dict[str, Any]] = []
-        
-        # Add system message if configuration has one
-        if hasattr(self.config, "system_message") and self.config.system_message:
-            messages.append({
-                "role": "system",
-                "content": self.config.system_message
-            })
-        
-        # Add conversation history
-        messages.extend(history)
-        
-        # Add the current query
-        messages.append({
-            "role": "user",
-            "content": query
-        })
+        messages = self._build_messages(history, system_message)
         
         # Log the messages being sent
         logger.debug(f"Sending messages to {self.llm_type}: {messages}")
         
         # Call the LLM client
-        response = await self.llm_client.achat(messages, **kwargs)
+        response = await self.llm_client.achat(messages)
         
         return response
+    
+    def stream_think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> Generator[str, None, None]:
+        """
+        Process the query using the configured LLM and stream the response.
+        
+        Args:
+            query: The user's input query
+            context: Optional context containing conversation history, etc.
+            
+        Yields:
+            Chunks of the response content
+        """
+        messages = self._build_messages(history, system_message)
+        
+        # Log the messages being sent
+        logger.debug(f"Streaming messages to {self.llm_type}: {messages}")
+        
+        # Check if the LLM client supports streaming
+        if hasattr(self.llm_client, 'stream_chat'):
+            # Stream from the LLM client
+            for chunk in self.llm_client.stream_chat(messages):
+                yield chunk
+        else:
+            # Fall back to non-streaming
+            logger.warning(f"LLM client {self.llm_type} doesn't support streaming, falling back to non-streaming")
+            response = self.llm_client.chat(messages)
+            yield response.get("content", "")
+    
+    async def astream_think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> AsyncGenerator[str, None]:
+        """
+        Process the query using the configured LLM and stream the response asynchronously.
+        
+        Args:
+            query: The user's input query
+            context: Optional context containing conversation history, etc.
+            
+        Yields:
+            Chunks of the response content
+        """
+        messages = self._build_messages(history, system_message)
+        
+        # Log the messages being sent
+        logger.debug(f"Async streaming messages to {self.llm_type}: {messages}")
+        
+        # Check if the LLM client supports async streaming
+        if hasattr(self.llm_client, 'astream_chat'):
+            # Stream from the LLM client
+            async for chunk in self.llm_client.astream_chat(messages):
+                yield chunk
+        else:
+            # Fall back to non-streaming
+            logger.warning(f"LLM client {self.llm_type} doesn't support async streaming, falling back to non-streaming")
+            response = await self.llm_client.achat(messages)
+            yield response.get("content", "")
     
     def reset(self) -> None:
         """Reset the brain state."""

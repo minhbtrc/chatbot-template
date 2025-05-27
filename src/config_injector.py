@@ -13,7 +13,7 @@ from src.base.components import (
     EmbeddingInterface,
     create_embedding
 )
-from src.base.bot import Bot
+from src.experts import QnaExpert, RAGBotExpert
 from src.chat_engine import ChatEngine
 
 
@@ -48,7 +48,10 @@ class ConfigurableModule(Module):
         brain = create_brain(self.config, llm_client, tool_provider)
         binder.bind(BrainInterface, to=brain, scope=singleton)
 
-        binder.bind(Bot, to=Bot, scope=singleton)
+        # Bind individual experts (they will be created by the factory as needed)
+        binder.bind(QnaExpert, to=QnaExpert, scope=singleton)
+        binder.bind(RAGBotExpert, to=RAGBotExpert, scope=singleton)
+        
         binder.bind(ChatEngine, to=ChatEngine, scope=singleton)
 
 
