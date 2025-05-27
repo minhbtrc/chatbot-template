@@ -42,16 +42,22 @@ def print_welcome_message():
     print()
 
 
-async def process_input(rag_bot: RAGBotExpert, chat_engine: ChatEngine, user_input: str, conversation_id: str) -> str:
+async def process_input(
+    rag_bot: RAGBotExpert,
+    chat_engine: ChatEngine,
+    user_input: str,
+    conversation_id: str,
+    user_id: str
+) -> str:
     """Process user input and return bot response."""
     if user_input.lower() == "exit":
         print("\nGoodbye!")
         sys.exit(0)
     elif user_input.lower() == "clear":
-        chat_engine.clear_history(conversation_id)
+        chat_engine.clear_history(conversation_id, user_id)
         return "Conversation history cleared."
     
-    response = await rag_bot.aprocess(user_input, conversation_id)
+    response = await rag_bot.aprocess(user_input, conversation_id, user_id)
     return response.response
 
 
@@ -63,7 +69,6 @@ async def main():
     
     # Create configuration
     config = Config()
-    print(f"77777{config.brain_type}")
     
     # Update config based on CLI arguments
     if args.model:
@@ -74,13 +79,14 @@ async def main():
     logger.info(f"Starting RAG Bot CLI with model: {config.model_type}")
     
     # Get instances
-    rag_bot = get_instance(RAGBotExpert)
-    chat_engine = get_instance(ChatEngine)
+    rag_bot: RAGBotExpert = get_instance(RAGBotExpert)
+    chat_engine: ChatEngine = get_instance(ChatEngine)
+    user_id = "default"
     
     # Process document if provided
     if args.document:
         print(f"\nProcessing document: {args.document}")
-        rag_bot.process_document(args.document)
+        await rag_bot.aprocess_document(args.document, user_id, "default")
         print("Document processed and indexed successfully!")
     
     # Print welcome message
@@ -93,7 +99,7 @@ async def main():
             user_input = input("User: ")
             
             # Process input and get response
-            response = await process_input(rag_bot, chat_engine, user_input, args.conversation_id)
+            response = await process_input(rag_bot, chat_engine, user_input, args.conversation_id, user_id)
             
             # Print the response
             print(f"Bot: {response}")

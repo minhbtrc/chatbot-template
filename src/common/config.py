@@ -15,7 +15,6 @@ from pydantic import Field, model_validator, BaseModel
 class Config(BaseModel):
     """Application settings loaded from environment variables."""
     # Bot Configuration
-    system_message: Optional[str] = Field(default=None, description="System message to use in chat prompts")
     ai_prefix: Optional[str] = Field(default="assistant", description="Prefix for AI messages in the prompt")
     human_prefix: Optional[str] = Field(default="user", description="Prefix for human messages in the prompt")
     memory_key: Optional[str] = Field(default="history", description="Key to use for conversation history")
@@ -61,6 +60,9 @@ class Config(BaseModel):
     ## Bot Configuration
     bot_type: Optional[str] = Field(default="CHAT", description="Type of bot to use (CHAT, RAG, DEEPRESEARCH)")
 
+    # Expert Configuration
+    expert_type: Optional[str] = Field(default="QNA", description="Type of expert to use (QNA, RAG, DEEPRESEARCH)")
+
     # Vector Database Configuration
     vector_database_type: Optional[str] = Field(default="CHROMA", description="Type of vector database to use (CHROMA, FAISS)")
     vector_database_chroma_path: Optional[str] = Field(default="./chroma_db", description="Path to Chroma vector database")
@@ -85,7 +87,11 @@ class Config(BaseModel):
     langfuse_public_key: Optional[str] = Field(default=None, description="")
     langfuse_host: Optional[str] = Field(default=None, description="")
 
-    
+    # Database Configuration
+    database_url: Optional[str] = Field(default="sqlite:///./chatbot.db", description="Database URL for user information storage")
+    database_echo: Optional[bool] = Field(default=False, description="Enable SQLAlchemy query logging")
+    database_pool_size: Optional[int] = Field(default=5, description="Database connection pool size")
+    database_max_overflow: Optional[int] = Field(default=10, description="Database connection pool max overflow")
 
     @model_validator(mode="before")
     @classmethod

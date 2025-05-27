@@ -4,11 +4,12 @@ Azure OpenAI client module.
 This module provides a client for interacting with Azure OpenAI models.
 """
 
+from collections.abc import Generator, AsyncGenerator
 from typing import Dict, Any, Optional, List
 import asyncio
+
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from pydantic import SecretStr
-
 from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from openai import APIError as OpenAIAPIError
@@ -229,6 +230,18 @@ class AzureOpenAIClient(BaseLLMClient):
             "max_retries": self.max_retries,
             "request_timeout": self.request_timeout
         }
+    
+    def stream_chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Generator[str, None, None]:
+        """
+        Send a chat message to Azure OpenAI and stream the response.
+        """
+        return self.client.stream(messages, **kwargs)
+    
+    async def astream_chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> AsyncGenerator[str, None]:
+        """
+        Send a chat message to Azure OpenAI and stream the response asynchronously.
+        """
+        return await self.client.astream_chat(messages, **kwargs)
     
     def create_chat_model(self, model_kwargs: Optional[Dict[str, Any]] = None) -> AzureChatOpenAI:
         """

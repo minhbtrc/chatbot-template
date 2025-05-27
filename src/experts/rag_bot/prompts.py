@@ -4,6 +4,5 @@ Answer only based on the context. If the answer is not present, say "I don't kno
 Context:
 {context}
 
-Question:
-{query}
+Conversation:
 """

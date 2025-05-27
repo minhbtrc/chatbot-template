@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Generator, AsyncGenerator
 
 from langgraph.prebuilt import create_react_agent
 
@@ -23,19 +23,36 @@ class AgentBrain(BaseBrain):
     def use_tools(self, tools: Optional[List[Any]] = None) -> None:
         logger.info("Tools are already added in brain")
 
-    def think(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        # If no context is provided, initialize it
-        context = context or {}
+    def _build_messages(self, history: List[Dict[str, Any]], system_message: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Build the messages for the agent.
         
-        # Extract conversation history if available
-        history = context.get("history", [])
-        history = [
-            {"role": turn["role"], "content": turn["content"]}
-            for turn in history
-        ]
+        Args:
+            history: List of messages in the conversation
+            system_message: Optional system message for the brain
+        
+        Returns:
+            List of messages
+        """
+        messages: List[Dict[str, Any]] = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        messages.extend(history)
+        return messages
 
-        history.append({"role": "user", "content": query})
-        response = self.brain.invoke({"messages": history}).get("messages")
+    def think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Process the input query and return a response.
+        
+        Args:
+            history: List of messages in the conversation
+            system_message: Optional system message for the brain
+        
+        Returns:
+            Dictionary containing the response
+        """
+        messages = self._build_messages(history, system_message)
+        response = self.brain.invoke({"messages": messages}).get("messages")
         last_message = response[-1]
 
         return {
@@ -43,25 +60,53 @@ class AgentBrain(BaseBrain):
             "additional_kwargs": last_message.additional_kwargs
         }
     
-    async def athink(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        # If no context is provided, initialize it
-        context = context or {}
+    async def athink(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Process the input query and return a response asynchronously.
         
-        # Extract conversation history if available
-        history = context.get("history", [])
-        history = [
-            {"role": turn["role"], "content": turn["content"]}
-            for turn in history
-        ]
-
-        history.append({"role": "user", "content": query})
-        response = await self.brain.ainvoke({"messages": history})
+        Args:
+            history: List of messages in the conversation
+            system_message: Optional system message for the brain
+        
+        Returns:
+            Dictionary containing the response
+        """
+        messages = self._build_messages(history, system_message)
+        response = await self.brain.ainvoke({"messages": messages})
         last_message = response.get("messages")[-1]
 
         return {
             "content": last_message.content,
             "additional_kwargs": last_message.additional_kwargs
         }
+    
+    def stream_think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> Generator[str, None, None]:
+        """
+        Process the input query and stream the response.
+        
+        Args:
+            history: List of messages in the conversation
+            system_message: Optional system message for the brain
+        
+        """
+        messages = self._build_messages(history, system_message)
+        response = self.brain.stream({"messages": messages})
+        for chunk in response:
+            yield chunk.content
+
+    async def astream_think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> AsyncGenerator[str, None]:
+        """
+        Process the input query and stream the response asynchronously.
+        
+        Args:
+            history: List of messages in the conversation
+            system_message: Optional system message for the brain
+        
+        """
+        messages = self._build_messages(history, system_message)
+        response = await self.brain.astream({"messages": messages})
+        async for chunk in response:
+            yield chunk.content
 
     def reset(self) -> None:
         self.brain.clear_cache()

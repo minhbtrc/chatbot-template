@@ -52,7 +52,12 @@ def print_welcome_message():
     print()
 
 
-async def process_input(chat_engine: ChatEngine, user_input: str, conversation_id: str) -> Optional[str]:
+async def process_input(
+    chat_engine: ChatEngine,
+    user_input: str,
+    conversation_id: str,
+    user_id: str
+) -> Optional[str]:
     """Process user input and return bot response."""
     # Check for exit commands
     if user_input.lower() in ["exit", "quit"]:
@@ -61,7 +66,7 @@ async def process_input(chat_engine: ChatEngine, user_input: str, conversation_i
         sys.exit(0)
         
     # Process the message
-    result = await chat_engine.process_message(user_input, conversation_id)
+    result = await chat_engine.process_message(user_input, conversation_id, user_id)
     return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
 
 async def main():
@@ -88,13 +93,14 @@ async def main():
     print_welcome_message()
     
     # Main interaction loop
+    user_id = "default"
     try:
         while True:
             # Get user input
             user_input = input("User: ")
             
             # Process input and get response
-            response = await process_input(chat_engine, user_input, args.conversation_id)
+            response = await process_input(chat_engine, user_input, args.conversation_id, user_id)
             
             # Print the response
             print(f"Bot: {response}")
