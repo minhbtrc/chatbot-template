@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import List, Dict, Any
 
+from loguru import logger
 from langchain_core.documents import Document
+from langchain_core.vectorstores import VectorStore
 
 from src.base.components.embeddings.base import BaseEmbedding as EmbeddingsInterface
 
@@ -12,6 +14,7 @@ class BaseVectorDatabase(ABC):
     """
     def __init__(self, embeddings: EmbeddingsInterface):
         self.embeddings = embeddings
+        self.client: VectorStore
 
     def make_metadata_filter(self, metadata: Dict[str, Any]):
         """
@@ -28,25 +31,17 @@ class BaseVectorDatabase(ABC):
             return True
         return filter_fn
 
-    @abstractmethod
     def _index_documents(self, documents: List[Document]) -> List[str]:
-        """
-        Index a documents to the vector database.
-        """
-        pass
+        return self.client.add_documents(documents)
 
     def index_documents(self, documents: List[Document]) -> List[str]:
         """
         Index a documents to the vector database.
         """
         return self._index_documents(documents)
-
-    @abstractmethod
+    
     async def _aindex_documents(self, documents: List[Document]) -> List[str]:
-        """
-        Index a documents to the vector database.
-        """
-        pass
+        return await self.client.aadd_documents(documents)
 
     async def aindex_documents(self, documents: List[Document]) -> List[str]:
         """
@@ -54,35 +49,35 @@ class BaseVectorDatabase(ABC):
         """
         return await self._aindex_documents(documents)
     
-    @abstractmethod
     def _retrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
-        """
-        Retrieve the most relevant chunks of a document from the vector database.
-        """
-        pass
+        logger.info(f"Retrieving context for query: {query}")
+        logger.info(f"Metadata: {metadata}")
+        retriever = self.client.as_retriever(
+            search_kwargs={"k": n_results}
+        )
+        return [doc.page_content for doc in retriever.invoke(query, filter=self.make_metadata_filter(metadata))]
 
     def retrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
         """
         Retrieve the most relevant chunks of a document from the vector database.
         """
-        return self._retrieve_context(query, n_results, metadata)
+        return self._retrieve_context(query, n_results)
     
-    @abstractmethod
     async def _aretrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
-        """
-        Retrieve the most relevant chunks of a document from the vector database.
-        """
-        pass
+        logger.info(f"Retrieving context for query: {query}")
+        logger.info(f"Metadata: {metadata}")
+        retriever = self.client.as_retriever(
+            search_kwargs={"k": n_results}
+        )
+        results = await retriever.ainvoke(query, filter=self.make_metadata_filter(metadata))
+        logger.debug(f"Results: {results}")
+        return [doc.page_content for doc in results]
 
     async def aretrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
         """
         Retrieve the most relevant chunks of a document from the vector database.
         """
         return await self._aretrieve_context(query, n_results, metadata)
-
-    @abstractmethod
-    def delete_document(self, document: str) -> None:
-        """
-        Delete a document from the vector database.
-        """
-        pass
+    
+    def delete_document(self, document_id: str) -> None:
+        self.client.delete(ids=[document_id])

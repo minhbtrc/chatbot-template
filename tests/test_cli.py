@@ -36,11 +36,11 @@ class TestCLI(unittest.TestCase):
         bot = MagicMock(spec=ChatEngine)
         
         with patch('sys.exit') as mock_exit:
-            asyncio.run(cli.process_input(bot, 'exit', 'test_session'))
+            asyncio.run(cli.process_input(bot, 'exit', 'test_session', 'user_id'))
             mock_exit.assert_called_once_with(0)
             
         with patch('sys.exit') as mock_exit:
-            asyncio.run(cli.process_input(bot, 'quit', 'test_session'))
+            asyncio.run(cli.process_input(bot, 'quit', 'test_session', 'user_id'))
             mock_exit.assert_called_once_with(0)
     
     def test_process_input_message(self):
@@ -52,9 +52,9 @@ class TestCLI(unittest.TestCase):
             additional_kwargs={}
         )
         
-        result = asyncio.run(cli.process_input(chat_engine, 'Hello', 'test_session'))
+        result = asyncio.run(cli.process_input(chat_engine, 'Hello', 'test_session', 'user_id'))
         
-        chat_engine.process_message.assert_called_once_with('Hello', 'test_session')
+        chat_engine.process_message.assert_called_once_with('Hello', 'test_session', 'user_id')
         self.assertEqual(result, 'Test response')
     
     def test_main_exception_handling(self):

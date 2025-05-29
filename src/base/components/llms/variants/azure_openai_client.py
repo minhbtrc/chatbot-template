@@ -235,13 +235,49 @@ class AzureOpenAIClient(BaseLLMClient):
         """
         Send a chat message to Azure OpenAI and stream the response.
         """
-        return self.client.stream(messages, **kwargs)
+        # Format messages for API - convert to the expected OpenAI format
+        formatted_messages: List[BaseMessage] = []
+        for msg in messages:
+            if 'role' in msg and 'content' in msg:
+                role = msg["role"]
+                content = msg["content"]
+                
+                # Create proper ChatCompletionMessageParam objects based on role
+                if role == "user":
+                    formatted_messages.append(HumanMessage(content))
+                elif role == "assistant":
+                    formatted_messages.append(AIMessage(content))
+                elif role == "system":
+                    formatted_messages.append(SystemMessage(content))
+        
+        # Stream from the LangChain client
+        for chunk in self.client.stream(formatted_messages, **kwargs):
+            # Extract content from AIMessageChunk
+            yield chunk.content
     
     async def astream_chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> AsyncGenerator[str, None]:
         """
         Send a chat message to Azure OpenAI and stream the response asynchronously.
         """
-        return await self.client.astream_chat(messages, **kwargs)
+        # Format messages for API - convert to the expected OpenAI format
+        formatted_messages: List[BaseMessage] = []
+        for msg in messages:
+            if 'role' in msg and 'content' in msg:
+                role = msg["role"]
+                content = msg["content"]
+                
+                # Create proper ChatCompletionMessageParam objects based on role
+                if role == "user":
+                    formatted_messages.append(HumanMessage(content))
+                elif role == "assistant":
+                    formatted_messages.append(AIMessage(content))
+                elif role == "system":
+                    formatted_messages.append(SystemMessage(content))
+        
+        # Stream from the LangChain client
+        async for chunk in self.client.astream(formatted_messages, **kwargs):
+            # Extract content from AIMessageChunk
+            yield chunk.content
     
     def create_chat_model(self, model_kwargs: Optional[Dict[str, Any]] = None) -> AzureChatOpenAI:
         """

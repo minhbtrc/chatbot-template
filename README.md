@@ -13,6 +13,10 @@ A modular backend framework for building AI chat applications powered by large l
 - 🔌 **Dependency Injection**: Clean component management and configuration
 - 🧪 **Testing Support**: Built-in testing infrastructure
 - 📚 **RAG Support**: Built-in support for Retrieval-Augmented Generation with document processing and vector storage
+- 🎯 **Streaming Chat**: Real-time streaming responses using Server-Sent Events (SSE)
+- 🖥️ **Streaming CLI**: Interactive command-line interface with real-time token streaming
+- 🗄️ **SQL Memory System**: Persistent conversation storage with repository pattern and user management
+- ⚡ **Async Support**: Full asynchronous operation support for high-performance applications
 
 ## Quick Start
 
@@ -89,26 +93,37 @@ A modular backend framework for building AI chat applications powered by large l
    # Specify a model type
    python cli.py --model llama
    
+   # Enable streaming responses (real-time token-by-token output)
+   python cli.py --stream
+   
+   # Combine options for streaming with specific model
+   python cli.py --model azureopenai --stream
+   
    # Use RAG bot with document processing
    python rag_cli.py --document path/to/your/document.pdf
    ```
 
-### Using the RAG Bot
+### CLI Options
 
-The RAG (Retrieval-Augmented Generation) bot allows you to:
-1. Process and index documents
-2. Ask questions about the processed documents
-3. Get context-aware responses
+The CLI supports several options for customizing your chat experience:
 
+**Main CLI (`cli.py`)**:
+- `--model`: Choose the LLM model type (`openai`, `llama`, `azureopenai`)
+- `--stream`: Enable real-time streaming responses (see tokens appear as they're generated)
+- `--conversation-id`: Set a custom conversation ID for session persistence
+
+**RAG CLI (`rag_cli.py`)**:
+- `--model`: Choose the LLM model type
+- `--document`: Process and index a document for RAG queries
+- `--conversation-id`: Set a custom conversation ID
+
+Examples:
 ```bash
-# Process a document
-python rag_cli.py --document path/to/your/document.pdf
+# Stream responses with Azure OpenAI
+python cli.py --model azureopenai --stream --conversation-id my_session
 
-# Start an interactive session
-python rag_cli.py --model OPENAI
-
-# Use a specific conversation ID
-python rag_cli.py --conversation-id my_conversation
+# Process a PDF and start RAG chat
+python rag_cli.py --document report.pdf --model openai
 ```
 
 ## Documentation
@@ -116,6 +131,11 @@ python rag_cli.py --conversation-id my_conversation
 📚 **Detailed documentation is available in the [docs/](./docs/) folder:**
 
 - [API Documentation](./docs/api.md) - Complete API reference and examples
+- [Streaming Chat API](./docs/streaming_api.md) - Real-time streaming chat implementation and usage
+- [SQL Memory System](./docs/sql_memory.md) - SQL-based conversation storage with repository pattern
+- [Quick Start: SQL & Streaming](./docs/quick_start_streaming_sql.md) - Fast setup guide for new features
+- [Database Documentation](./docs/database.md) - Database models and configuration
+- [Conversation Management](./docs/conversation_management_api.md) - Advanced conversation handling
 - [Folder Structure](./docs/folder_structure.md) - Project organization and architecture
 - [Error Handling](./docs/api.md#error-handling) - Error handling and best practices
 - [Logging](./docs/api.md#logging) - Logging configuration and usage

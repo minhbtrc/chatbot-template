@@ -33,47 +33,42 @@ class TestVectorDatabases(unittest.TestCase):
         with self.assertRaises(ValueError):
             create_vector_database(config, self.mock_embeddings)
 
-    @patch('chromadb.PersistentClient')
-    def test_retrieve_context_return_type(self, mock_client: MagicMock) -> None:
-        mock_collection = MagicMock()
-        mock_collection.query.return_value = {
-            "documents": [["test document 1"], ["test document 2"]]
-        }
-        mock_client.return_value.get_or_create_collection.return_value = mock_collection
+    @patch('src.base.components.vector_databases.variants.chromadb.Chroma')
+    def test_retrieve_context_return_type(self, mock_chroma: MagicMock) -> None:
+        # Mock the Chroma client and retriever
+        mock_retriever = MagicMock()
+        mock_retriever.invoke.return_value = [
+            Document(page_content="test document 1"),
+            Document(page_content="test document 2")
+        ]
+        mock_chroma.return_value.as_retriever.return_value = mock_retriever
         
         vector_database = create_vector_database(self.mock_config, self.mock_embeddings)
         
-        # First index some documents
-        documents = [Document(page_content="test document 1"), Document(page_content="test document 2")]
-        vector_database.index_documents(documents)
-        
-        # Test retrieve_context
-        result = vector_database.retrieve_context("test query", n_results=2)
+        # Test retrieve_context with empty metadata to avoid filter issues
+        result = vector_database.retrieve_context("test query", n_results=2, metadata={})
         assert isinstance(result, List)
         assert all(isinstance(x, str) for x in result)
 
-    @patch('chromadb.PersistentClient')
-    def test_index_documents_return_type(self, mock_client: MagicMock) -> None:
-        mock_collection = MagicMock()
-        mock_client.return_value.get_or_create_collection.return_value = mock_collection
+    @patch('src.base.components.vector_databases.variants.chromadb.Chroma')
+    def test_index_documents_return_type(self, mock_chroma: MagicMock) -> None:
+        # Mock the add_documents method to return document IDs
+        mock_chroma.return_value.add_documents.return_value = ['id0', 'id1']
         
         vector_database = create_vector_database(self.mock_config, self.mock_embeddings)
         
-        # Test index_document
+        # Test index_documents - it should return List[str] of document IDs
         documents = [Document(page_content="test document 1"), Document(page_content="test document 2")]
         result = vector_database.index_documents(documents)
-        assert result is None
+        assert isinstance(result, List)
+        assert all(isinstance(x, str) for x in result)
+        assert result == ['id0', 'id1']
 
-    @patch('chromadb.PersistentClient')
-    def test_delete_document_return_type(self, mock_client: MagicMock) -> None:
-        mock_collection = MagicMock()
-        mock_client.return_value.get_or_create_collection.return_value = mock_collection
+    @patch('src.base.components.vector_databases.variants.chromadb.Chroma')
+    def test_delete_document_return_type(self, mock_chroma: MagicMock) -> None:
+        mock_chroma.return_value.delete.return_value = None
         
         vector_database = create_vector_database(self.mock_config, self.mock_embeddings)
-        
-        # First index a document
-        documents = [Document(page_content="test document to delete")]
-        vector_database.index_documents(documents)
         
         # Test delete_document
         result = vector_database.delete_document("test_doc_id")

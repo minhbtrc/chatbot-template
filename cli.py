@@ -21,7 +21,6 @@ from src.common.config import Config
 from src.common.logging import logger
 from src.config_injector import get_instance, update_injector_with_config
 
-
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser."""
     parser = argparse.ArgumentParser(
@@ -40,8 +39,12 @@ def create_parser() -> argparse.ArgumentParser:
         default="cli_session",
         help="Conversation ID for the session (default: cli_session)",
     )
+    parser.add_argument(
+        "--stream",
+        action="store_true",
+        help="Enable streamed LLM response (default: off)",
+    )
     return parser
-
 
 def print_welcome_message():
     """Print welcome message and instructions."""
@@ -51,59 +54,57 @@ def print_welcome_message():
     print("=" * 20)
     print()
 
+async def process_streaming(
+    chat_engine: ChatEngine,
+    user_input: str,
+    conversation_id: str,
+    user_id: str
+) -> None:
+    """Stream bot response token by token."""
+    async for token in chat_engine.stream_process_message(user_input, conversation_id, user_id):
+        print(token, end="", flush=True)
+    print()  # newline after stream ends
 
-async def process_input(
+async def process_full_response(
     chat_engine: ChatEngine,
     user_input: str,
     conversation_id: str,
     user_id: str
 ) -> Optional[str]:
-    """Process user input and return bot response."""
-    # Check for exit commands
-    if user_input.lower() in ["exit", "quit"]:
-        print("\nGoodbye!")
-        chat_engine.close()
-        sys.exit(0)
-        
-    # Process the message
+    """Return full bot response."""
     result = await chat_engine.process_message(user_input, conversation_id, user_id)
     return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
 
 async def main():
     """Run the CLI application."""
-    # Parse command line arguments
     parser = create_parser()
     args = parser.parse_args()
-    
-    # Create configuration
-    config = Config()
-    
-    # Update config based on CLI arguments
+
+    config = Config(expert_type="QNA")
     if args.model:
         config.model_type = args.model.upper()
-    
+
     update_injector_with_config(config)
-    
+
     logger.info(f"Starting CLI with model: {config.model_type}")
-    
-    # Create the bot with the brain and memory
     chat_engine = cast(ChatEngine, get_instance(ChatEngine))
-    
-    # Print welcome message
+
     print_welcome_message()
-    
-    # Main interaction loop
+
     user_id = "default"
     try:
         while True:
-            # Get user input
             user_input = input("User: ")
-            
-            # Process input and get response
-            response = await process_input(chat_engine, user_input, args.conversation_id, user_id)
-            
-            # Print the response
-            print(f"Bot: {response}")
+            if user_input.strip().lower() in ["exit", "quit"]:
+                print("\nGoodbye!")
+                break
+
+            print("Bot: ", end="", flush=True)
+            if args.stream:
+                await process_streaming(chat_engine, user_input, args.conversation_id, user_id)
+            else:
+                response = await process_full_response(chat_engine, user_input, args.conversation_id, user_id)
+                print(response)
             print()
     except KeyboardInterrupt:
         print("\nGoodbye!")
@@ -115,6 +116,5 @@ async def main():
     finally:
         chat_engine.close()
 
-
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

@@ -1,4 +1,4 @@
-from typing import List, AsyncGenerator, Generator, Dict, Any
+from typing import List, Dict, Any
 import os
 
 from injector import inject
@@ -7,7 +7,6 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_experimental.text_splitter import SemanticChunker
 
 from src.common.config import Config
-from src.common.schemas import ChatResponse
 from src.base.components import VectorDatabaseInterface, EmbeddingInterface, MemoryInterface
 from src.base.brains import BrainInterface
 from src.experts.rag_bot.prompts import RAG_PROMPT
@@ -149,101 +148,28 @@ class RAGBotExpert(BaseExpert):
         """
         return await self.vector_database.aretrieve_context(query, max_chunks, metadata)
 
-    def _prepare_context(self, query: str, user_id: str, max_chunks: int = 10) -> str:
+    def _prepare_context(self, sentence: str, conversation_id: str, user_id: str, max_chunks: int = 10) -> str:
         """
         Prepares context string by appending the query to retrieved documents.
+
+        Args:
+            sentence: User input
+            conversation_id: ID of the conversation
+            user_id: ID of the user
+            max_chunks: Maximum number of chunks to retrieve
+
         """
-        context_chunks = self.retrieve_context(query, max_chunks, metadata={"user_id": user_id})
+        context_chunks = self.retrieve_context(sentence, max_chunks, metadata={"user_id": user_id})
         return RAG_PROMPT.format(context="".join(f'- {chunk}\n' for chunk in context_chunks))
     
-    async def _aprepare_context(self, query: str, user_id: str, max_chunks: int = 10) -> str:
+    async def _aprepare_context(self, sentence: str, user_id: str, max_chunks: int = 10) -> str:
         """
         Asynchronous version of `_prepare_context`.
-        """
-        context_chunks = await self.aretrieve_context(query, max_chunks, metadata={"user_id": user_id})
-        return RAG_PROMPT.format(context="".join(f'- {chunk}\n' for chunk in context_chunks), query=query)
-    
-    def _prepare_history(self, sentence: str, conversation_id: str, user_id: str) -> List[Dict[str, str]]:
-        """
-        Prepares history for the bot.
-        """
-        self.memory.add_message(role="user", content=sentence, conversation_id=conversation_id)
-        history = self.memory.get_history(conversation_id)
-        if not history:
-            return []
-        return history
-    
-    def process(self, query: str, conversation_id: str, user_id: str, max_chunks: int = 10) -> ChatResponse:
-        """
-        Handles a query using synchronous bot processing.
-        """
-        history = self._prepare_history(query, conversation_id, user_id)
-        context = self._prepare_context(query, user_id, max_chunks)
-        logger.info("Start brain call")
-        response = self.brain.think(history, context)
-        logger.info("End brain call")
 
-        self.memory.add_message(role="assistant", content=response["content"], conversation_id=conversation_id)
-        return ChatResponse(
-            response=response["content"],
-            conversation_id=conversation_id,
-            session_id=user_id,
-            additional_kwargs=response["additional_kwargs"]
-        )
-    
-    async def aprocess(self, query: str, conversation_id: str, user_id: str, max_chunks: int = 10) -> ChatResponse:
-        """
-        Handles a query using asynchronous bot processing.
-        """
-        history = self._prepare_history(query, conversation_id, user_id)
-        context = await self._aprepare_context(query, user_id, max_chunks)
-        logger.info("Start brain call")
-        response = await self.brain.athink(history, context)
-        logger.info("End brain call")
-
-        self.memory.add_message(role="assistant", content=response["content"], conversation_id=conversation_id)
-        return ChatResponse(
-            response=response["content"],
-            conversation_id=conversation_id,
-            session_id=user_id,
-            additional_kwargs=response["additional_kwargs"]
-        )
-
-    def stream_call(self, sentence: str, conversation_id: str, user_id: str) -> Generator[str, None, None]:
-        """
-        Stream a response to user input using RAG context.
-        
         Args:
-            sentence: User input
-            conversation_id: ID of the conversation
+            query: User input
             user_id: ID of the user
-            
-        Yields:
-            Chunks of the response content
+            max_chunks: Maximum number of chunks to retrieve
         """
-        history = self._prepare_history(sentence, conversation_id, user_id)
-        context = self._prepare_context(sentence, user_id)
-        yield from self.brain.stream_think(history, context)
-
-    async def astream_call(self, sentence: str, conversation_id: str, user_id: str) -> AsyncGenerator[str, None]:
-        """
-        Stream a response to user input using RAG context (asynchronous).
-        
-        Args:
-            sentence: User input
-            conversation_id: ID of the conversation
-            user_id: ID of the user
-            
-        Yields:
-            Chunks of the response content
-        """
-        history = self._prepare_history(sentence, conversation_id, user_id)
-        context = await self._aprepare_context(sentence, user_id)
-        async for chunk in self.brain.astream_think(history, context):
-            yield chunk
-
-    def clear_history(self, conversation_id: str, user_id: str) -> None:
-        """
-        Clears the conversation history for a specific conversation.
-        """
-        self.memory.clear_history(conversation_id)
+        context_chunks = await self.aretrieve_context(sentence, max_chunks, metadata={"user_id": user_id})
+        return RAG_PROMPT.format(context="".join(f'- {chunk}\n' for chunk in context_chunks), query=sentence)
