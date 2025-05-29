@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+"""
+RAG Bot CLI – interact with a RAG-powered assistant from your terminal.
+
+Features:
+- Load and index a document via `--document`
+- Ask questions about the indexed content
+- Stream LLM responses if `--stream` is enabled
+"""
+
 import argparse
 import asyncio
 import sys
@@ -28,6 +38,11 @@ def create_parser() -> argparse.ArgumentParser:
         type=str,
         help="Path to document to process and index",
     )
+    parser.add_argument(
+        "--stream",
+        action="store_true",
+        help="Enable streamed LLM response",
+    )
     return parser
 
 
@@ -42,14 +57,13 @@ def print_welcome_message():
     print()
 
 
-async def process_input(
-    rag_bot: RAGBotExpert,
+async def process_input_full(
     chat_engine: ChatEngine,
     user_input: str,
     conversation_id: str,
     user_id: str
 ) -> str:
-    """Process user input and return bot response."""
+    """Process user input and return full bot response."""
     if user_input.lower() == "exit":
         print("\nGoodbye!")
         sys.exit(0)
@@ -57,52 +71,65 @@ async def process_input(
         chat_engine.clear_history(conversation_id, user_id)
         return "Conversation history cleared."
     
-    response = await rag_bot.aprocess(user_input, conversation_id, user_id)
-    return response.response
+    result = await chat_engine.process_message(user_input, conversation_id, user_id)
+    return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
+
+
+async def process_input_stream(
+    chat_engine: ChatEngine,
+    user_input: str,
+    conversation_id: str,
+    user_id: str
+) -> None:
+    """Process user input with streaming response."""
+    if user_input.lower() == "exit":
+        print("\nGoodbye!")
+        sys.exit(0)
+    elif user_input.lower() == "clear":
+        chat_engine.clear_history(conversation_id, user_id)
+        print("Conversation history cleared.")
+        return
+
+    async for token in chat_engine.stream_process_message(user_input, conversation_id, user_id):
+        print(token, end="", flush=True)
+    print()  # newline after stream ends
 
 
 async def main():
     """Run the RAG Bot CLI application."""
-    # Parse command line arguments
     parser = create_parser()
     args = parser.parse_args()
-    
-    # Create configuration
-    config = Config()
-    
-    # Update config based on CLI arguments
+
+    config = Config(expert_type="RAG")
     if args.model:
         config.model_type = args.model.upper()
-    
+
     update_injector_with_config(config)
-    
+
     logger.info(f"Starting RAG Bot CLI with model: {config.model_type}")
-    
-    # Get instances
+
     rag_bot: RAGBotExpert = get_instance(RAGBotExpert)
     chat_engine: ChatEngine = get_instance(ChatEngine)
     user_id = "default"
-    
-    # Process document if provided
+
+    # Optional: process document
     if args.document:
         print(f"\nProcessing document: {args.document}")
-        await rag_bot.aprocess_document(args.document, user_id, "default")
-        print("Document processed and indexed successfully!")
-    
-    # Print welcome message
+        await rag_bot.aprocess_document(args.document, user_id, args.conversation_id)
+        print("Document processed and indexed successfully!\n")
+
     print_welcome_message()
-    
-    # Main interaction loop
+
     try:
         while True:
-            # Get user input
             user_input = input("User: ")
-            
-            # Process input and get response
-            response = await process_input(rag_bot, chat_engine, user_input, args.conversation_id, user_id)
-            
-            # Print the response
-            print(f"Bot: {response}")
+            print("Bot: ", end="", flush=True)
+
+            if args.stream:
+                await process_input_stream(chat_engine, user_input, args.conversation_id, user_id)
+            else:
+                response = await process_input_full(chat_engine, user_input, args.conversation_id, user_id)
+                print(response)
             print()
     except KeyboardInterrupt:
         print("\nGoodbye!")
@@ -116,4 +143,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())
