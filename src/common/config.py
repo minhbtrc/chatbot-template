@@ -13,7 +13,13 @@ from pydantic import Field, model_validator, BaseModel
 
 
 class Config(BaseModel):
-    """Application settings loaded from environment variables."""
+    """Application settings loaded from environment variables.
+
+    When a value is not provided during initialization, the corresponding
+    environment variable (matching the field name in upper case) will be used
+    as a default. Explicit arguments always take precedence over environment
+    variables.
+    """
     # Bot Configuration
     ai_prefix: Optional[str] = Field(default="assistant", description="Prefix for AI messages in the prompt")
     human_prefix: Optional[str] = Field(default="user", description="Prefix for human messages in the prompt")
@@ -96,11 +102,12 @@ class Config(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values: Any):
-        # If the value is not, get value from environment variable with uppercase key
+        """Load missing values from environment variables."""
         for field_name in cls.model_fields:
-            field_value = os.getenv(field_name.upper())
-            if values.get(field_name) is None or field_value:
-                values[field_name] = field_value
+            if values.get(field_name) is None:
+                field_value = os.getenv(field_name.upper())
+                if field_value is not None:
+                    values[field_name] = field_value
         return values
 
     @classmethod
