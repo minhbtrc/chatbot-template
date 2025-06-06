@@ -15,14 +15,17 @@ The project is organized into several key directories:
 ├── src/                  # Source code
 │   ├── chat_engine.py    # Chat engine implementation
 │   ├── config_injector.py # Dependency injection setup
-│   ├── core/             # Core application logic
-│   │   ├── bot.py        # Main Bot class
-│   │   ├── brains/       # Brain implementations
-│   │   └── components/   # Reusable components
+│   ├── base/             # Core framework pieces
+│   │   ├── brains/       # Brain interface and variants
+│   │   └── components/   # Modular building blocks
 │   │       ├── llms/     # LLM client implementations
-│   │       ├── memory/   # Memory implementations
+│   │       ├── memories/ # Conversation memory backends
+│   │       ├── embeddings/ # Embedding generators
 │   │       ├── tools/    # Tool implementations
-│   │       └── README.md # Components documentation
+│   │       └── vector_databases/ # Vector DB integrations
+│   ├── experts/          # Domain-specific chat experts
+│   │   ├── qna/          # Q&A expert implementation
+│   │   └── rag_bot/      # Retrieval‑augmented generation expert
 │   └── common/           # Shared utilities
 ├── tests/               # Test directory
 ├── docs/                # Documentation
@@ -51,14 +54,20 @@ The API layer handles HTTP requests and responses using FastAPI:
 - `src/chat_engine.py` - Chat engine implementation for message processing
 - `src/config_injector.py` - Dependency injection configuration
 
-#### Core Layer (`src/core/`)
-- `src/core/bot.py` - Main Bot class that orchestrates components
-- `src/core/brains/` - Brain implementations for different reasoning strategies
-- `src/core/components/` - Reusable components
+#### Base Layer (`src/base/`)
+- `src/base/brains/` - Brain interfaces and variants
+- `src/base/components/` - Core components
   - `llms/` - LLM client implementations
-  - `memory/` - Memory storage implementations
+  - `memories/` - Conversation memory implementations
+  - `embeddings/` - Embedding generators
   - `tools/` - Tool implementations
+  - `vector_databases/` - Vector database integrations
   - `README.md` - Components documentation
+
+#### Experts (`src/experts/`)
+- Domain-specific experts built on top of the base layer
+- `qna/` - Question answering expert
+- `rag_bot/` - Retrieval‑augmented generation expert
 
 #### Common Utilities (`src/common/`)
 - Shared utilities and models
@@ -84,17 +93,12 @@ The application follows a layered architecture:
    - Error handling
    - Middleware processing
 
-2. **Core Layer**
-   - Bot orchestration
-   - Chat engine processing
-   - Brain implementations
-   - Component coordination
+2. **Base Layer**
+   - Brain abstractions and component factories
+   - Chat engine integration
 
-3. **Components Layer**
-   - Modular, interchangeable components
-   - LLM clients
-   - Memory implementations
-   - Tool implementations
+3. **Experts**
+   - Domain-specific logic built on the base layer
 
 4. **Common Layer**
    - Shared utilities
