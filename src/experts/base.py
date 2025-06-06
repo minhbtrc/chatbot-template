@@ -219,10 +219,8 @@ class BaseExpert:
     def close(self) -> None:
         """Close any resources used by the bot."""
         logger.info("Closing bot resources")
-        if hasattr(self.memory, 'close'):
-            logger.debug("Closing memory resources")
-            self.memory.close()
-        if hasattr(self.brain, 'close'):
-            logger.debug("Closing brain resources")
-            getattr(self.brain, 'close')()
+        logger.debug("Closing memory resources")
+        self.memory.close()
+        logger.debug("Closing brain resources")
+        self.brain.close()
         logger.info("Bot resources closed successfully")

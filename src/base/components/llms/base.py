@@ -45,35 +45,33 @@ class BaseLLMClient(ABC):
         """
         pass
     
+    @abstractmethod
     def stream_chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Generator[str, None, None]:
         """
         Send a chat message to the LLM and stream the response.
-        
+
         Args:
             messages: List of message dictionaries with 'role' and 'content' keys
             **kwargs: Additional model-specific parameters
-            
+
         Yields:
             Chunks of the response content
         """
-        # Default implementation: fall back to non-streaming
-        response = self.chat(messages, **kwargs)
-        yield response.get("content", "")
+        pass
     
+    @abstractmethod
     async def astream_chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> AsyncGenerator[str, None]:
         """
         Send a chat message to the LLM and stream the response asynchronously.
-        
+
         Args:
             messages: List of message dictionaries with 'role' and 'content' keys
             **kwargs: Additional model-specific parameters
-            
+
         Yields:
             Chunks of the response content
         """
-        # Default implementation: fall back to non-streaming
-        response = await self.achat(messages, **kwargs)
-        yield response.get("content", "")
+        pass
     
     @abstractmethod
     def complete(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:

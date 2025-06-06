@@ -108,3 +108,8 @@ class BaseBrain(ABC):
         """
         # Default implementation does nothing
         pass
+
+    def close(self) -> None:
+        """Close any resources used by the brain."""
+        # Default implementation does nothing
+        pass

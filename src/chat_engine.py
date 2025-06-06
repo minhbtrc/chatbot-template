@@ -140,23 +140,16 @@ class ChatEngine:
         logger.debug(f"Using expert: {type(self.current_expert).__name__}")
         
         try:
-            # Check if expert supports streaming
-            if hasattr(self.current_expert, 'astream_call'):
-                # Stream the response from the expert
-                async for chunk in self.current_expert.astream_call(
-                    sentence=user_input,
-                    user_id=user_id,
-                    conversation_id=conversation_id
-                ):
-                    yield chunk
-            else:
-                # Fallback to non-streaming for experts that don't support it
-                logger.warning(f"Expert {type(self.current_expert).__name__} doesn't support streaming, falling back to non-streaming")
-                response = await self.process_message(user_input, conversation_id, user_id, session_id)
-                yield response.response
-            
+            # Stream the response from the expert
+            async for chunk in self.current_expert.astream_call(
+                sentence=user_input,
+                user_id=user_id,
+                conversation_id=conversation_id
+            ):
+                yield chunk
+
             logger.info(f"Successfully streamed message for conversation {conversation_id}")
-            
+
         except Exception as e:
             logger.error(f"Error streaming message for conversation {conversation_id}: {str(e)}")
             raise
