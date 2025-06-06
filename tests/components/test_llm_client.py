@@ -46,6 +46,15 @@ class MockLLMClient(LLMInterface):
         """Mock implementation of bind_tools method."""
         self.tools = tools
 
+    def stream_chat(self, messages: List[Dict[str, str]], **kwargs: Any):
+        self.stream_called = True
+        for chunk in ["stream"]:
+            yield chunk
+
+    async def astream_chat(self, messages: List[Dict[str, str]], **kwargs: Any):
+        self.astream_called = True
+        yield "astream"
+
 
 class TestBaseLLMClient(unittest.TestCase):
     """Test cases for the BaseLLMClient implementations."""

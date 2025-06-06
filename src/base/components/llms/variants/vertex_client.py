@@ -25,7 +25,7 @@ class VertexAIClient(BaseLLMClient):
         Args:
             config: Application configuration
         """
-        self.config = config
+        super().__init__(config)
         self.credentials_file = os.getenv("CREDENTIALS_FILE") or getattr(config, "credentials", None)
         
         if not self.credentials_file:
@@ -81,4 +81,49 @@ class VertexAIClient(BaseLLMClient):
         kwargs = {**default_kwargs, **(model_kwargs or {})}
         
         # Create and return the model
-        return ChatVertexAI(**kwargs) 
+        return ChatVertexAI(**kwargs)
+
+    def chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
+        """Send a chat request to Vertex AI."""
+        formatted_messages = [m["content"] for m in messages if "content" in m]
+        prompt = "\n".join(formatted_messages)
+        response = self.client.invoke(prompt, **kwargs)
+        return {"content": response, "additional_kwargs": {}}
+
+    def stream_chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> Generator[str, None, None]:
+        """Stream chat from Vertex AI. Fallback to non-streaming."""
+        if hasattr(self.client, "stream"):
+            formatted_messages = [m["content"] for m in messages if "content" in m]
+            prompt = "\n".join(formatted_messages)
+            for chunk in self.client.stream(prompt, **kwargs):
+                yield chunk
+        else:
+            response = self.chat(messages, **kwargs)
+            yield response.get("content", "")
+
+    async def astream_chat(self, messages: List[Dict[str, str]], **kwargs: Any) -> AsyncGenerator[str, None]:
+        """Async stream chat from Vertex AI. Fallback to non-streaming."""
+        if hasattr(self.client, "astream"):
+            formatted_messages = [m["content"] for m in messages if "content" in m]
+            prompt = "\n".join(formatted_messages)
+            async for chunk in self.client.astream(prompt, **kwargs):
+                yield chunk
+        else:
+            response = await self.achat(messages, **kwargs)
+            yield response.get("content", "")
+
+    def complete(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        """Send a completion prompt."""
+        messages = [{"role": "user", "content": prompt}]
+        return self.chat(messages, **kwargs)
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """Return model information."""
+        return {
+            "provider": "VertexAI",
+            "credentials_file": self.credentials_file,
+        }
+
+    def close(self) -> None:
+        """Close any resources used by the client."""
+        pass

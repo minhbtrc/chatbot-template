@@ -113,16 +113,8 @@ class LLMBrain(BaseBrain):
         # Log the messages being sent
         logger.debug(f"Streaming messages to {self.llm_type}: {messages}")
         
-        # Check if the LLM client supports streaming
-        if hasattr(self.llm_client, 'stream_chat'):
-            # Stream from the LLM client
-            for chunk in self.llm_client.stream_chat(messages):
-                yield chunk
-        else:
-            # Fall back to non-streaming
-            logger.warning(f"LLM client {self.llm_type} doesn't support streaming, falling back to non-streaming")
-            response = self.llm_client.chat(messages)
-            yield response.get("content", "")
+        for chunk in self.llm_client.stream_chat(messages):
+            yield chunk
     
     async def astream_think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> AsyncGenerator[str, None]:
         """
@@ -140,16 +132,8 @@ class LLMBrain(BaseBrain):
         # Log the messages being sent
         logger.debug(f"Async streaming messages to {self.llm_type}: {messages}")
         
-        # Check if the LLM client supports async streaming
-        if hasattr(self.llm_client, 'astream_chat'):
-            # Stream from the LLM client
-            async for chunk in self.llm_client.astream_chat(messages):
-                yield chunk
-        else:
-            # Fall back to non-streaming
-            logger.warning(f"LLM client {self.llm_type} doesn't support async streaming, falling back to non-streaming")
-            response = await self.llm_client.achat(messages)
-            yield response.get("content", "")
+        async for chunk in self.llm_client.astream_chat(messages):
+            yield chunk
     
     def reset(self) -> None:
         """Reset the brain state."""
