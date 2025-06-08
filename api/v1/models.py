@@ -9,7 +9,7 @@ class ChatRequest(BaseModel):
     """Chat request model."""
     
     input: str = Field(..., description="User message")
-    conversation_id: Optional[str] = Field(default="default", description="Conversation ID")
+    conversation_id: Optional[str] = Field(default=None, description="Conversation ID (optional, will be auto-generated if not provided)")
 
 
 class ChatResponse(BaseModel):
@@ -20,8 +20,18 @@ class ChatResponse(BaseModel):
     additional_kwargs: Dict[str, Any] = Field(..., description="Additional kwargs")
 
 
+class StreamingChatChunk(BaseModel):
+    """Streaming chat chunk model for Server-Sent Events."""
+    
+    type: str = Field(..., description="Type of chunk: 'start', 'chunk', 'end', or 'error'")
+    content: Optional[str] = Field(default=None, description="Content chunk (for 'chunk' type)")
+    conversation_id: Optional[str] = Field(default=None, description="Conversation ID")
+    error: Optional[str] = Field(default=None, description="Error message (for 'error' type)")
+    timestamp: Optional[str] = Field(default=None, description="Timestamp of the chunk")
+
+
 class RagDocumentRequest(BaseModel):
     """RAG document request model."""
     
     file: UploadFile = File(...)
-    conversation_id: Optional[str] = Field(default="default", description="Conversation ID")
+    conversation_id: Optional[str] = Field(default=None, description="Conversation ID")

@@ -4,16 +4,15 @@ from src.common.config import Config
 from .base import BaseChatbotMemory
 from .variants.in_memory import InMemory
 from .variants.mongodb_memory import MongoMemory
-from .variants.sql_memory import SQLMemory
+# from .variants.sql_memory import SQLMemory
 
 
-def create_memory(config: Config, user_id: Optional[int] = None) -> BaseChatbotMemory:
+def create_memory(config: Config) -> BaseChatbotMemory:
     """
     Create a memory instance based on configuration.
     
     Args:
         config: Application configuration
-        user_id: Optional user ID to associate with the memory instance
         
     Returns:
         Memory instance
@@ -24,7 +23,7 @@ def create_memory(config: Config, user_id: Optional[int] = None) -> BaseChatbotM
         return MongoMemory(config)
     elif memory_type == "INMEMORY":
         return InMemory()
-    elif memory_type == "SQL":
-        return SQLMemory(user_id=user_id)
+    # elif memory_type == "SQL":
+    #     return SQLMemory(user_id=user_id)
     else:
         raise ValueError(f"Invalid memory type: {memory_type}. Supported types: MONGODB, INMEMORY, SQL, ASYNC_SQL")

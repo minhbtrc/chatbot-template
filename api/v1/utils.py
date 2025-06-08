@@ -12,7 +12,7 @@ def get_chat_engine(request: Request) -> ChatEngine:
         request: The current request object
         
     Returns:
-        Bot instance
+        ChatEngine instance
     """
     return request.app.state.chat_engine
 

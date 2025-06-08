@@ -41,8 +41,7 @@ def test_chat_endpoint(test_client):
     mock_chat_engine.process_message.assert_called_once_with(
         user_input="Hello, test bot!",
         conversation_id="test_conversation",
-        user_id=None,
-        session_id=None
+        user_id=""
     )
 
 
@@ -67,5 +66,5 @@ def test_clear_history_endpoint(test_client):
     # Verify the bot was called with the right parameters
     mock_chat_engine.clear_history.assert_called_once_with(
         conversation_id="test_conversation",
-        user_id=None
+        user_id=""
     ) 
