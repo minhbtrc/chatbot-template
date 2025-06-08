@@ -2,7 +2,7 @@
 Chat manager module that interfaces with experts.
 """
 
-from typing import Optional, AsyncGenerator, Dict, Any
+from typing import AsyncGenerator, Dict, Any
 import asyncio
 
 from injector import inject
@@ -77,8 +77,7 @@ class ChatEngine:
         self, 
         user_input: str, 
         conversation_id: str,
-        user_id: str,
-        session_id: Optional[str] = None
+        user_id: str
     ) -> ChatResponse:
         """
         Process a user message and get a response.
@@ -87,12 +86,11 @@ class ChatEngine:
             user_input: User's message
             conversation_id: Optional conversation ID
             user_id: Optional user ID for authenticated users
-            session_id: Optional session ID for user sessions
             
         Returns:
             The expert's response
         """
-        logger.info(f"Processing message for conversation {conversation_id} (user_id: {user_id}, session_id: {session_id})")
+        logger.info(f"Processing message for conversation {conversation_id} (user_id: {user_id})")
         logger.debug(f"User input: {user_input}")
         logger.debug(f"Using expert: {type(self.current_expert).__name__}")
         
@@ -108,8 +106,6 @@ class ChatEngine:
             logger.info(f"Successfully processed message for conversation {conversation_id}")
             logger.debug(f"Expert response: {response.response}")
             
-            # Update the response with session information
-            response.session_id = session_id
             return response
         except Exception as e:
             logger.error(f"Error processing message for conversation {conversation_id}: {str(e)}")
@@ -119,8 +115,7 @@ class ChatEngine:
         self, 
         user_input: str, 
         conversation_id: str,
-        user_id: str,
-        session_id: Optional[str] = None
+        user_id: str
     ) -> AsyncGenerator[str, None]:
         """
         Process a user message and stream the response.
@@ -129,13 +124,12 @@ class ChatEngine:
             user_input: User's message
             conversation_id: Optional conversation ID
             user_id: Optional user ID for authenticated users
-            session_id: Optional session ID for user sessions
             
         Yields:
             Chunks of the response content
         """
         # Generate conversation_id if not provided
-        logger.info(f"Streaming message for conversation {conversation_id} (user_id: {user_id}, session_id: {session_id})")
+        logger.info(f"Streaming message for conversation {conversation_id} (user_id: {user_id})")
         logger.debug(f"User input: {user_input}")
         logger.debug(f"Using expert: {type(self.current_expert).__name__}")
         
@@ -160,39 +154,24 @@ class ChatEngine:
         
         Args:
             conversation_id: ID of the conversation to clear
-            user_id: Optional user ID for access control
+            user_id: User ID (not used in single user system)
         """
-        # Add basic access control - users can only clear their own conversations
-        if user_id and not conversation_id.startswith(f"user_{user_id}_"):
-            logger.warning(f"User {user_id} attempted to clear conversation {conversation_id} they don't own")
-            raise PermissionError("Cannot clear conversation that doesn't belong to you")
-        
-        logger.info(f"Clearing history for conversation {conversation_id} (user_id: {user_id})")
+        logger.info(f"Clearing history for conversation {conversation_id}")
         self.current_expert.clear_history(conversation_id, user_id)
         logger.info(f"Successfully cleared history for conversation {conversation_id}")
     
-    def get_user_conversations(self, user_id: int) -> list[str]:
+    def get_all_conversations(self) -> list[str]:
         """
-        Get all conversation IDs for a specific user.
+        Get all conversation IDs in the system.
         
-        Args:
-            user_id: User ID
-            
         Returns:
-            List of conversation IDs belonging to the user
+            List of all conversation IDs
         """
-        # Check if expert has memory and supports getting conversations
+        # Get all conversations from the current expert
         all_conversations = self.current_expert.get_all_conversations()
-        user_conversations = [
-            conv_id for conv_id in all_conversations 
-            if conv_id.startswith(f"user_{user_id}_")
-        ]
         
-        logger.info(f"Found {len(user_conversations)} conversations for user {user_id}")
-        return user_conversations
-        
-        logger.warning(f"Expert {type(self.current_expert).__name__} doesn't support conversation listing")
-        return []
+        logger.info(f"Found {len(all_conversations)} conversations")
+        return all_conversations
     
     def close(self) -> None:
         """Close any resources used by the chat manager."""

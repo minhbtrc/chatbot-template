@@ -21,6 +21,7 @@ from src.common.config import Config
 from src.common.logging import logger
 from src.config_injector import get_instance, update_injector_with_config
 
+
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser."""
     parser = argparse.ArgumentParser(
@@ -46,6 +47,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
     return parser
 
+
 def print_welcome_message():
     """Print welcome message and instructions."""
     print("\n=== Chatbot CLI ===")
@@ -53,6 +55,7 @@ def print_welcome_message():
     print("Press Ctrl+C to exit at any time.")
     print("=" * 20)
     print()
+
 
 async def process_streaming(
     chat_engine: ChatEngine,
@@ -65,7 +68,8 @@ async def process_streaming(
         print(token, end="", flush=True)
     print()  # newline after stream ends
 
-async def process_full_response(
+
+async def process_input(
     chat_engine: ChatEngine,
     user_input: str,
     conversation_id: str,
@@ -74,6 +78,7 @@ async def process_full_response(
     """Return full bot response."""
     result = await chat_engine.process_message(user_input, conversation_id, user_id)
     return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
+
 
 async def main():
     """Run the CLI application."""
@@ -103,7 +108,7 @@ async def main():
             if args.stream:
                 await process_streaming(chat_engine, user_input, args.conversation_id, user_id)
             else:
-                response = await process_full_response(chat_engine, user_input, args.conversation_id, user_id)
+                response = await process_input(chat_engine, user_input, args.conversation_id, user_id)
                 print(response)
             print()
     except KeyboardInterrupt:
