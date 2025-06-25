@@ -55,7 +55,7 @@ class BaseVectorDatabase(ABC):
         retriever = self.client.as_retriever(
             search_kwargs={"k": n_results}
         )
-        return [doc.page_content for doc in retriever.invoke(query, filter=self.make_metadata_filter(metadata))]
+        return [doc.page_content for doc in retriever.invoke(query)]
 
     def retrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
         """
@@ -69,7 +69,8 @@ class BaseVectorDatabase(ABC):
         retriever = self.client.as_retriever(
             search_kwargs={"k": n_results}
         )
-        results = await retriever.ainvoke(query, filter=self.make_metadata_filter(metadata))
+        results = await retriever.ainvoke(query)
+        
         logger.debug(f"Results: {results}")
         return [doc.page_content for doc in results]
 

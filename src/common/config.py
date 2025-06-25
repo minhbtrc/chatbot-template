@@ -25,6 +25,12 @@ class Config(BaseModel):
     human_prefix: Optional[str] = Field(default="user", description="Prefix for human messages in the prompt")
     memory_key: Optional[str] = Field(default="history", description="Key to use for conversation history")
     
+    # RAG Evaluation Configuration
+    enable_synthetic_dataset_generation: Optional[bool] = Field(default=True, description="Enable automatic synthetic test case generation during document ingestion")
+    synthetic_questions_per_chunk: Optional[int] = Field(default=3, description="Number of synthetic questions to generate per document chunk")
+    synthetic_max_chunks_per_document: Optional[int] = Field(default=10, description="Maximum number of chunks to process for synthetic question generation per document")
+    synthetic_dataset_export_path: Optional[str] = Field(default="./synthetic_datasets", description="Directory path to export synthetic test datasets")
+    
     # Chat Configuration
     model_type: str = Field(default="OPENAI", description="The type of model to use (OPENAI, VERTEX, LLAMA, AZUREOPENAI)")
     

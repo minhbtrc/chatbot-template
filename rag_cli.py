@@ -100,7 +100,7 @@ async def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    config = Config(expert_type="RAG")
+    config = Config(expert_type="RAG", vector_database_type="CHROMA")
     if args.model:
         config.model_type = args.model.upper()
 
