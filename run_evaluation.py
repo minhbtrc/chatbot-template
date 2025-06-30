@@ -8,11 +8,18 @@ import json
 import sys
 import os
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 import glob
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
+# Import dependencies
+from src.common.config import Config
+from src.config_injector import update_injector_with_config, get_instance
+from src.experts.rag_bot.expert import RAGBotExpert
+from src.experts.rag_bot.evaluator import RAGEvaluator, EvaluationResult
+from src.common.logging import logger
 
 def load_filtered_dataset(dataset_file: str) -> List[Dict[str, Any]]:
     """Load filtered dataset từ file JSON"""
@@ -28,147 +35,198 @@ def load_filtered_dataset(dataset_file: str) -> List[Dict[str, Any]]:
         print(f"❌ File JSON không hợp lệ: {dataset_file}")
         return []
 
-def create_mock_evaluator():
-    """Tạo mock evaluator để demo (thay thế khi có evaluator thực)"""
+def convert_dataset_to_test_cases(dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Convert dataset format to evaluation test cases format"""
+    test_cases = []
     
-    class MockRAGEvaluator:
-        def __init__(self):
-            self.name = "Mock RAG Evaluator"
+    for item in dataset:
+        test_case = {
+            "query": item.get("question", ""),
+            "expected_context": item.get("expected_context", ""),
+            "expected_response": item.get("expected_answer", ""),
+            "expected_doc_id": item.get("document_id", ""),
+            "question_type": item.get("question_type", "unknown"),
+            "difficulty": item.get("difficulty", "unknown"),
+            "id": item.get("id", "")
+        }
+        test_cases.append(test_case)
+    
+    return test_cases
+
+def convert_evaluation_results_to_report_format(results: List[EvaluationResult]) -> Dict[str, Any]:
+    """Convert EvaluationResult objects to the expected report format"""
+    
+    if not results:
+        return {"error": "No evaluation results provided"}
+    
+    total_cases = len(results)
+    successful_cases = 0
+    failed_cases = 0
+    
+    # Calculate success/failure based on retrieval and generation scores
+    for result in results:
+        retrieval_success = getattr(result, 'top_5_accuracy_score', 0) > 0.7 if hasattr(result, 'top_5_accuracy_score') else result.retrieval_score and result.retrieval_score > 0.7
+        generation_success = getattr(result, 'llm_as_judge_score', 0) > 0.5 if hasattr(result, 'llm_as_judge_score') else result.generation_score and result.generation_score > 0.5
         
-        def evaluate_batch(self, test_cases: List[Dict[str, Any]]) -> Dict[str, Any]:
-            """Mock evaluation - thay thế bằng evaluator thực"""
-            import random
-            import time
-            
-            print("🤖 Đang chạy evaluation (Mock)...")
-            
-            results = []
-            total_retrieval_time = 0
-            total_generation_time = 0
-            successful_cases = 0
-            failed_cases = 0
-            
-            for i, test_case in enumerate(test_cases):
-                print(f"📊 Đang evaluate test case {i+1}/{len(test_cases)}: {test_case.get('id', 'N/A')}")
-                
-                # Simulate processing time
-                time.sleep(0.1)
-                
-                # Mock metrics (thay thế bằng evaluation thực)
-                retrieval_time = random.uniform(0.1, 0.5)
-                generation_time = random.uniform(0.5, 2.0)
-                
-                # Mock scores
-                retrieval_score = random.uniform(0.6, 0.95)
-                generation_score = random.uniform(0.7, 0.9)
-                faithfulness_score = random.uniform(0.75, 0.95)
-                
-                is_success = retrieval_score > 0.7 and generation_score > 0.75
-                
-                if is_success:
-                    successful_cases += 1
-                else:
-                    failed_cases += 1
-                
-                result = {
-                    "test_case_id": test_case.get('id', f'test_{i}'),
-                    "question": test_case.get('question', ''),
-                    "question_type": test_case.get('question_type', 'unknown'),
-                    "difficulty": test_case.get('difficulty', 'unknown'),
-                    "success": is_success,
-                    "retrieval_metrics": {
-                        "precision_at_5": retrieval_score,
-                        "recall_at_5": retrieval_score * 0.8,
-                        "mrr": retrieval_score * 0.9,
-                        "retrieval_time": retrieval_time
-                    },
-                    "generation_metrics": {
-                        "faithfulness": faithfulness_score,
-                        "relevance": generation_score,
-                        "quality": generation_score * 0.95,
-                        "generation_time": generation_time
-                    },
-                    "failure_reason": None if is_success else "Low retrieval/generation score"
-                }
-                
-                results.append(result)
-                total_retrieval_time += retrieval_time
-                total_generation_time += generation_time
-            
-            # Tính toán metrics tổng thể
-            avg_precision = sum(r["retrieval_metrics"]["precision_at_5"] for r in results) / len(results)
-            avg_recall = sum(r["retrieval_metrics"]["recall_at_5"] for r in results) / len(results)
-            avg_mrr = sum(r["retrieval_metrics"]["mrr"] for r in results) / len(results)
-            avg_faithfulness = sum(r["generation_metrics"]["faithfulness"] for r in results) / len(results)
-            avg_relevance = sum(r["generation_metrics"]["relevance"] for r in results) / len(results)
-            avg_quality = sum(r["generation_metrics"]["quality"] for r in results) / len(results)
-            
-            # Phân tích theo loại câu hỏi
-            question_type_performance = {}
-            difficulty_performance = {}
-            
-            for result in results:
-                q_type = result["question_type"]
-                difficulty = result["difficulty"]
-                
-                if q_type not in question_type_performance:
-                    question_type_performance[q_type] = []
-                question_type_performance[q_type].append(1 if result["success"] else 0)
-                
-                if difficulty not in difficulty_performance:
-                    difficulty_performance[difficulty] = []
-                difficulty_performance[difficulty].append(1 if result["success"] else 0)
-            
-            # Tính average cho từng loại
-            for q_type in question_type_performance:
-                scores = question_type_performance[q_type]
-                question_type_performance[q_type] = sum(scores) / len(scores)
-            
-            for difficulty in difficulty_performance:
-                scores = difficulty_performance[difficulty]
-                difficulty_performance[difficulty] = sum(scores) / len(scores)
-            
-            # Phân tích lỗi
-            failure_reasons = {}
-            for result in results:
-                if not result["success"] and result["failure_reason"]:
-                    reason = result["failure_reason"]
-                    failure_reasons[reason] = failure_reasons.get(reason, 0) + 1
-            
-            return {
-                "summary": {
-                    "total_cases": len(test_cases),
-                    "successful_cases": successful_cases,
-                    "failed_cases": failed_cases,
-                    "success_rate": successful_cases / len(test_cases)
-                },
-                "metrics": {
-                    "retrieval": {
-                        "precision_at_5": avg_precision,
-                        "recall_at_5": avg_recall,
-                        "mrr": avg_mrr
-                    },
-                    "generation": {
-                        "faithfulness": avg_faithfulness,
-                        "relevance": avg_relevance,
-                        "quality": avg_quality
-                    }
-                },
-                "performance": {
-                    "avg_retrieval_time": total_retrieval_time / len(test_cases),
-                    "avg_generation_time": total_generation_time / len(test_cases),
-                    "total_time": total_retrieval_time + total_generation_time
-                },
-                "question_type_performance": question_type_performance,
-                "difficulty_performance": difficulty_performance,
-                "failure_analysis": {
-                    "top_reasons": failure_reasons
-                },
-                "detailed_results": results,
-                "recommendations": generate_recommendations(successful_cases / len(test_cases), failure_reasons)
-            }
+        if retrieval_success and generation_success:
+            successful_cases += 1
+        else:
+            failed_cases += 1
     
-    return MockRAGEvaluator()
+    # Calculate aggregate metrics
+    retrieval_scores: List[float] = []
+    generation_scores: List[float] = []
+    faithfulness_scores: List[float] = []
+    quality_scores: List[float] = []
+    
+    for result in results:
+        # Use the new metric names if available, otherwise fall back to legacy
+        if hasattr(result, 'top_5_accuracy_score'):
+            score = getattr(result, 'top_5_accuracy_score', 0)
+            if score is not None:
+                retrieval_scores.append(float(score))
+        elif result.retrieval_score is not None:
+            retrieval_scores.append(float(result.retrieval_score))
+            
+        if hasattr(result, 'llm_as_judge_score'):
+            score = getattr(result, 'llm_as_judge_score', 0)
+            if score is not None:
+                generation_scores.append(float(score))
+        elif result.generation_score is not None:
+            generation_scores.append(float(result.generation_score))
+            
+        if result.faithfulness_score is not None:
+            faithfulness_scores.append(float(result.faithfulness_score))
+            
+        if result.quality_score is not None:
+            quality_scores.append(float(result.quality_score))
+    
+    # Calculate averages
+    avg_precision = sum(retrieval_scores) / len(retrieval_scores) if retrieval_scores else 0
+    avg_recall = avg_precision * 0.8  # Approximation for recall
+    avg_mrr = avg_precision * 0.9  # Approximation for MRR
+    avg_faithfulness = sum(faithfulness_scores) / len(faithfulness_scores) if faithfulness_scores else 0
+    avg_relevance = sum(generation_scores) / len(generation_scores) if generation_scores else 0
+    avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
+    
+    # Calculate performance metrics
+    retrieval_times = [r.retrieval_latency for r in results if r.retrieval_latency is not None]
+    generation_times = [r.generation_latency for r in results if r.generation_latency is not None]
+    
+    avg_retrieval_time = sum(retrieval_times) / len(retrieval_times) if retrieval_times else 0
+    avg_generation_time = sum(generation_times) / len(generation_times) if generation_times else 0
+    
+    # Analyze by question type and difficulty
+    question_type_performance: Dict[str, List[int]] = {}
+    difficulty_performance: Dict[str, List[int]] = {}
+    
+    for result in results:
+        # Extract metadata from the result
+        q_type = result.metadata.get('question_type', 'unknown') if result.metadata else 'unknown'
+        difficulty = result.metadata.get('difficulty', 'unknown') if result.metadata else 'unknown'
+        
+        # Determine success
+        retrieval_success = getattr(result, 'top_5_accuracy_score', 0) > 0.7 if hasattr(result, 'top_5_accuracy_score') else result.retrieval_score and result.retrieval_score > 0.7
+        generation_success = getattr(result, 'llm_as_judge_score', 0) > 0.5 if hasattr(result, 'llm_as_judge_score') else result.generation_score and result.generation_score > 0.5
+        is_success = retrieval_success and generation_success
+        
+        if q_type not in question_type_performance:
+            question_type_performance[q_type] = []
+        question_type_performance[q_type].append(1 if is_success else 0)
+        
+        if difficulty not in difficulty_performance:
+            difficulty_performance[difficulty] = []
+        difficulty_performance[difficulty].append(1 if is_success else 0)
+    
+    # Calculate averages for each category
+    question_type_avg: Dict[str, float] = {}
+    for q_type in question_type_performance:
+        scores = question_type_performance[q_type]
+        question_type_avg[q_type] = sum(scores) / len(scores)
+    
+    difficulty_avg: Dict[str, float] = {}
+    for difficulty in difficulty_performance:
+        scores = difficulty_performance[difficulty]
+        difficulty_avg[difficulty] = sum(scores) / len(scores)
+    
+    # Analyze failures
+    failure_reasons: Dict[str, int] = {}
+    for result in results:
+        retrieval_success = getattr(result, 'top_5_accuracy_score', 0) > 0.7 if hasattr(result, 'top_5_accuracy_score') else result.retrieval_score and result.retrieval_score > 0.7
+        generation_success = getattr(result, 'llm_as_judge_score', 0) > 0.5 if hasattr(result, 'llm_as_judge_score') else result.generation_score and result.generation_score > 0.5
+        
+        if not retrieval_success:
+            reason = "Low retrieval score"
+            failure_reasons[reason] = failure_reasons.get(reason, 0) + 1
+        elif not generation_success:
+            reason = "Low generation score"
+            failure_reasons[reason] = failure_reasons.get(reason, 0) + 1
+    
+    # Create detailed results for compatibility
+    detailed_results = []
+    for i, result in enumerate(results):
+        retrieval_success = getattr(result, 'top_5_accuracy_score', 0) > 0.7 if hasattr(result, 'top_5_accuracy_score') else result.retrieval_score and result.retrieval_score > 0.7
+        generation_success = getattr(result, 'llm_as_judge_score', 0) > 0.5 if hasattr(result, 'llm_as_judge_score') else result.generation_score and result.generation_score > 0.5
+        is_success = retrieval_success and generation_success
+        
+        detailed_result = {
+            "test_case_id": result.metadata.get('id', f'test_{i}') if result.metadata else f'test_{i}',
+            "question": result.query,
+            "question_type": result.metadata.get('question_type', 'unknown') if result.metadata else 'unknown',
+            "difficulty": result.metadata.get('difficulty', 'unknown') if result.metadata else 'unknown',
+            "success": is_success,
+            "retrieval_metrics": {
+                "precision_at_5": getattr(result, 'top_5_accuracy_score', result.retrieval_score or 0),
+                "recall_at_5": getattr(result, 'top_5_accuracy_score', result.retrieval_score or 0) * 0.8,
+                "mrr": getattr(result, 'mrr_at_10_score', result.retrieval_score or 0) if hasattr(result, 'mrr_at_10_score') else (result.retrieval_score or 0) * 0.9,
+                "retrieval_time": result.retrieval_latency or 0
+            },
+            "generation_metrics": {
+                "faithfulness": result.faithfulness_score or 0,
+                "relevance": getattr(result, 'llm_as_judge_score', result.generation_score or 0),
+                "quality": result.quality_score or 0,
+                "generation_time": result.generation_latency or 0
+            },
+            "failure_reason": None if is_success else ("Low retrieval score" if not retrieval_success else "Low generation score")
+        }
+        detailed_results.append(detailed_result)
+    
+    # Generate recommendations
+    success_rate = successful_cases / total_cases if total_cases > 0 else 0
+    recommendations = generate_recommendations(success_rate, failure_reasons)
+    
+    return {
+        "summary": {
+            "total_cases": total_cases,
+            "successful_cases": successful_cases,
+            "failed_cases": failed_cases,
+            "success_rate": success_rate
+        },
+        "metrics": {
+            "retrieval": {
+                "precision_at_5": avg_precision,
+                "recall_at_5": avg_recall,
+                "mrr": avg_mrr
+            },
+            "generation": {
+                "faithfulness": avg_faithfulness,
+                "relevance": avg_relevance,
+                "quality": avg_quality
+            }
+        },
+        "performance": {
+            "avg_retrieval_time": avg_retrieval_time,
+            "avg_generation_time": avg_generation_time,
+            "total_time": sum(retrieval_times) + sum(generation_times)
+        },
+        "question_type_performance": question_type_avg,
+        "difficulty_performance": difficulty_avg,
+        "failure_analysis": {
+            "top_reasons": failure_reasons
+        },
+        "detailed_results": detailed_results,
+        "recommendations": recommendations
+    }
 
 def generate_recommendations(success_rate: float, failure_reasons: Dict[str, int]) -> List[str]:
     """Tạo recommendations dựa trên kết quả evaluation"""
@@ -181,10 +239,15 @@ def generate_recommendations(success_rate: float, failure_reasons: Dict[str, int
     if success_rate < 0.5:
         recommendations.append("Cần xem xét lại cấu hình RAG system")
     
-    if "Low retrieval/generation score" in failure_reasons:
-        count = failure_reasons["Low retrieval/generation score"]
+    if "Low retrieval score" in failure_reasons:
+        count = failure_reasons["Low retrieval score"]
         if count > 5:
-            recommendations.append("Nhiều lỗi do retrieval/generation kém - cần fine-tune model")
+            recommendations.append("Nhiều lỗi do retrieval kém - cần cải thiện vector database hoặc embedding")
+    
+    if "Low generation score" in failure_reasons:
+        count = failure_reasons["Low generation score"]
+        if count > 5:
+            recommendations.append("Nhiều lỗi do generation kém - cần fine-tune model hoặc cải thiện prompt")
     
     if success_rate >= 0.8:
         recommendations.append("Performance tốt - có thể tăng độ khó của test cases")
@@ -195,45 +258,71 @@ def generate_recommendations(success_rate: float, failure_reasons: Dict[str, int
     return recommendations
 
 def run_comprehensive_evaluation(dataset_file: str) -> Optional[Dict[str, Any]]:
-    """Chạy evaluation toàn diện"""
+    """Chạy evaluation toàn diện với RAGEvaluator thực"""
     
     print("🚀 KHỞI TẠO EVALUATION PIPELINE")
     print("=" * 50)
     
     # Load dataset
-    test_cases = load_filtered_dataset(dataset_file)
-    if not test_cases:
+    dataset = load_filtered_dataset(dataset_file)
+    if not dataset:
         print("❌ Không thể load dataset")
         return None
     
+    # Convert dataset to test cases format
+    test_cases = convert_dataset_to_test_cases(dataset)
     print(f"📊 Sẽ evaluate {len(test_cases)} test cases")
     
-    # Khởi tạo evaluator
-    print("🔧 Khởi tạo evaluator...")
+    # Initialize dependency injection
+    print("🔧 Khởi tạo RAG system...")
     try:
-        # Thử import evaluator thực
-        # from src.experts.rag_bot.evaluator import create_rag_evaluator
-        # evaluator = create_rag_evaluator()
+        config = Config()
+        config.expert_type = "RAG"  # Ensure RAG expert is used
         
-        # Tạm thời dùng mock evaluator
-        evaluator = create_mock_evaluator()
-        print("✅ Evaluator đã sẵn sàng (Mock mode)")
+        update_injector_with_config(config)
+        
+        # Get RAG expert and evaluator instances with proper casting
+        rag_expert = cast(RAGBotExpert, get_instance(RAGBotExpert))
+        evaluator = cast(RAGEvaluator, get_instance(RAGEvaluator))
+        
+        print("✅ RAG system và evaluator đã sẵn sàng")
         
     except Exception as e:
-        print(f"⚠️ Không thể khởi tạo evaluator thực, dùng mock: {str(e)}")
-        evaluator = create_mock_evaluator()
+        print(f"❌ Lỗi khởi tạo RAG system: {str(e)}")
+        logger.error(f"Failed to initialize RAG system: {str(e)}")
+        return None
+    
+    # Add metadata to test cases for better tracking
+    for i, test_case in enumerate(test_cases):
+        if 'metadata' not in test_case:
+            test_case['metadata'] = {}
+        # Update metadata with proper type handling
+        metadata_update = {
+            'question_type': test_case.get('question_type', 'unknown'),
+            'difficulty': test_case.get('difficulty', 'unknown'),
+            'id': test_case.get('id', f'test_{i}')
+        }
+        test_case['metadata'].update(metadata_update)
     
     # Chạy evaluation
     print(f"🧪 Bắt đầu evaluation...")
     start_time = datetime.now()
     
     try:
-        results = evaluator.evaluate_batch(test_cases)
+        # Use the real evaluator's batch evaluation method
+        evaluation_results = evaluator.evaluate_batch(
+            rag_expert=rag_expert,
+            test_cases=test_cases,
+            user_id="evaluation_user"
+        )
         
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
         
         print(f"✅ Evaluation hoàn thành trong {duration:.2f} giây")
+        
+        # Convert evaluation results to expected format
+        results = convert_evaluation_results_to_report_format(evaluation_results)
         
         # Thêm metadata
         results["metadata"] = {
@@ -241,13 +330,14 @@ def run_comprehensive_evaluation(dataset_file: str) -> Optional[Dict[str, Any]]:
             "evaluation_start": start_time.isoformat(),
             "evaluation_end": end_time.isoformat(),
             "duration_seconds": duration,
-            "evaluator_type": "mock"  # Thay đổi khi dùng evaluator thực
+            "evaluator_type": "real_rag_evaluator"
         }
         
         return results
         
     except Exception as e:
         print(f"❌ Lỗi khi chạy evaluation: {str(e)}")
+        logger.error(f"Evaluation failed: {str(e)}")
         return None
 
 def save_evaluation_results(results: Dict[str, Any]) -> tuple:
@@ -289,6 +379,7 @@ def create_summary_report(results: Dict[str, Any], output_file: str) -> None:
 - **Thời gian evaluation:** {results["metadata"]["evaluation_start"]} - {results["metadata"]["evaluation_end"]}
 - **Thời lượng:** {results["metadata"]["duration_seconds"]:.2f} giây
 - **Dataset:** {results["metadata"]["dataset_file"]}
+- **Evaluator:** {results["metadata"]["evaluator_type"]}
 - **Tổng số test cases:** {summary["total_cases"]}
 - **Thành công:** {summary["successful_cases"]}
 - **Thất bại:** {summary["failed_cases"]}
@@ -347,7 +438,7 @@ def create_summary_report(results: Dict[str, Any], output_file: str) -> None:
 4. **Re-evaluate:** Sau khi có improvements
 
 ---
-*Báo cáo được tạo tự động bởi RAG Evaluation Pipeline*
+*Báo cáo được tạo tự động bởi RAG Evaluation Pipeline với Real Evaluator*
 """
     
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -413,7 +504,7 @@ def find_latest_filtered_dataset() -> Optional[str]:
 def main():
     """Main function"""
     
-    print("🧪 RAG Evaluation Runner")
+    print("🧪 RAG Evaluation Runner (Real Evaluator)")
     print("=" * 50)
     
     # Lấy file dataset
