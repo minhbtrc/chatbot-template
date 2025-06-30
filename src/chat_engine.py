@@ -3,13 +3,12 @@ Chat manager module that interfaces with experts.
 """
 
 from typing import AsyncGenerator, Dict, Any
-import asyncio
 
 from injector import inject
 
 from src.common.schemas import ChatResponse
 from src.base.brains import BrainInterface
-from src.experts import QnaExpert, RAGBotExpert
+from src.experts import QnaExpert, RAGBotExpert, DeepResearchExpert
 from src.common.config import Config
 from src.common.logging import logger
 
@@ -25,7 +24,8 @@ class ChatEngine:
         config: Config,
         brain: BrainInterface,
         qna_expert: QnaExpert,
-        rag_bot_expert: RAGBotExpert
+        rag_bot_expert: RAGBotExpert,
+        deepresearch_expert: DeepResearchExpert
     ):
         """Initialize the chat engine with an expert instance."""
         # Create the config
@@ -34,7 +34,14 @@ class ChatEngine:
         self.brain = brain        
         self.qna_expert = qna_expert
         self.rag_bot_expert = rag_bot_expert
-        self.current_expert = self.rag_bot_expert if config.expert_type == "RAG" else self.qna_expert
+        self.deepresearch_expert = deepresearch_expert
+        if config.expert_type == "RAG":
+            self.current_expert = self.rag_bot_expert
+        elif config.expert_type == "DEEPRESEARCH":
+            self.current_expert = self.deepresearch_expert
+        else:
+            self.current_expert = qna_expert
+
         logger.info(f"ChatEngine initialized with expert type: {config.expert_type}")
         logger.info(f"Expert class: {type(self.current_expert).__name__}")
     
@@ -97,8 +104,7 @@ class ChatEngine:
         # Run the expert call in a thread pool to not block the event loop
         # as expert.process might be CPU intensive
         try:
-            response = await asyncio.to_thread(
-                self.current_expert.process,
+            response = await self.current_expert.aprocess(
                 query=user_input,
                 conversation_id=conversation_id,
                 user_id=user_id

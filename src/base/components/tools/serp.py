@@ -49,6 +49,9 @@ class CustomSearchTool(BaseTool):
         """
         return self._search.run(input_data)
     
+    def search(self, input_data: str):
+        return self._search.results(input_data)
+    
     def get_parameters_schema(self) -> Dict[str, Any]:
         """
         Get the JSON schema for the tool's parameters.
