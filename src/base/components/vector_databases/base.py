@@ -55,13 +55,13 @@ class BaseVectorDatabase(ABC):
         retriever = self.client.as_retriever(
             search_kwargs={"k": n_results}
         )
-        return [doc.page_content for doc in retriever.invoke(query, filter=self.make_metadata_filter(metadata))]
+        return [doc.page_content for doc in retriever.invoke(query, filter=metadata)]
 
     def retrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
         """
         Retrieve the most relevant chunks of a document from the vector database.
         """
-        return self._retrieve_context(query, n_results)
+        return self._retrieve_context(query, n_results, metadata)
     
     async def _aretrieve_context(self, query: str, n_results: int = 10, metadata: Dict[str, Any] = {}) -> List[str]:
         logger.info(f"Retrieving context for query: {query}")
@@ -69,7 +69,7 @@ class BaseVectorDatabase(ABC):
         retriever = self.client.as_retriever(
             search_kwargs={"k": n_results}
         )
-        results = await retriever.ainvoke(query, filter=self.make_metadata_filter(metadata))
+        results = await retriever.ainvoke(query, filter=metadata)
         logger.debug(f"Results: {results}")
         return [doc.page_content for doc in results]
 
