@@ -12,6 +12,7 @@ from langgraph.types import Send
 from langgraph.graph import StateGraph
 from langgraph.graph import START, END
 from langchain_core.runnables import RunnableConfig
+from langchain_tavily import TavilySearch
 
 from src.common.config import Config
 from src.experts.base import BaseExpert
@@ -71,6 +72,7 @@ class DeepResearchExpert(BaseExpert):
         self.llm_client = llm_client
         self.graph = self._build_graph()
 
+        tool_provider.register_tool(CustomSearchTool())
         available_tools = tool_provider.get_tools()
         if available_tools:
             logger.info(f"Binding {len(available_tools)} tools to brain")
@@ -78,6 +80,9 @@ class DeepResearchExpert(BaseExpert):
         else:
             logger.info("No tools available for binding")
         logger.info("Deep Research Expert initialized with LangGraph workflow")
+
+        self.max_research_loops = 5
+        self.number_of_initial_queries = 5
     
     def _build_graph(self):
         """Build the LangGraph workflow."""
@@ -109,12 +114,10 @@ class DeepResearchExpert(BaseExpert):
 
     def _generate_query(self, state: OverallState, config: RunnableConfig = None) -> QueryGenerationState:  # type: ignore
         """LangGraph node that generates search queries based on the User's question."""
-        # Use default values from config
-        number_of_initial_queries = 3
 
         # check for custom initial search query count
         if state.get("initial_search_query_count", 0) == 0:  # type: ignore
-            state["initial_search_query_count"] = number_of_initial_queries
+            state["initial_search_query_count"] = self.number_of_initial_queries
 
         # Format the prompt
         formatted_prompt = query_writer_instructions.format(
@@ -150,17 +153,35 @@ class DeepResearchExpert(BaseExpert):
     def _web_research(self, state: WebSearchState, config: RunnableConfig = None) -> Dict[str, Any]:  # type: ignore
         """LangGraph node that performs web research using the native Google Search API tool."""
         try:
-            search_tool = CustomSearchTool()
-            serpapi_json: Dict[str, Any] = search_tool.search(state["search_query"])
-            organic_results = serpapi_json.get("organic_results", [])[:5]
+            # search_tool = CustomSearchTool()
+            search_tool = TavilySearch()
+            results = search_tool.run(state["search_query"])
 
             sources_gathered: List[Dict[str, Any]] = []
             snippet_blocks: List[str] = []
 
+            # Tavily returns results in a different format - extract the content
+            if isinstance(results, str):
+                # If results is a string, it might be the formatted content
+                web_research_result = [results] if results.strip() else ["No useful results found"]
+                return {
+                    "sources_gathered": [],
+                    "search_query": [state["search_query"]],
+                    "web_research_result": web_research_result,
+                }
+            
+            # Handle Tavily's structured response format
+            if isinstance(results, dict):
+                organic_results = results.get("results", [])
+            elif isinstance(results, list):
+                organic_results = results
+            else:
+                organic_results = []
+
             for i, result in enumerate(organic_results):
                 title = result.get("title", "").strip()
-                url = result.get("link", "").strip()
-                snippet = result.get("snippet", "").strip()
+                url = result.get("url", "").strip()  # Tavily uses "url" instead of "link"
+                snippet = result.get("content", "").strip()  # Tavily uses "content" instead of "snippet"
 
                 if not title or not url:
                     continue  # skip bad results
@@ -239,9 +260,8 @@ class DeepResearchExpert(BaseExpert):
         config: RunnableConfig = None,  # type: ignore
     ) -> Union[str, List[Send]]:
         """LangGraph routing function that determines the next step in the research flow."""
-        max_research_loops = 3  # Default value
         
-        if state["is_sufficient"] or state["research_loop_count"] >= max_research_loops:
+        if state["is_sufficient"] or state["research_loop_count"] >= self.max_research_loops:
             return "finalize_answer"
         else:
             return [
@@ -331,8 +351,8 @@ class DeepResearchExpert(BaseExpert):
             "search_query": [],
             "web_research_result": [],
             "sources_gathered": [],
-            "initial_search_query_count": 3,
-            "max_research_loops": 3,
+            "initial_search_query_count": self.number_of_initial_queries,
+            "max_research_loops": self.max_research_loops,
             "research_loop_count": 0,
         }
         return initial_state
