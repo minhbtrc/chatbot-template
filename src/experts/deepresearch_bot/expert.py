@@ -3,6 +3,7 @@ Deep Research Bot Expert that uses LangGraph workflow for comprehensive research
 """
 from typing import Any, Dict, Generator, AsyncGenerator, Union, List
 import ast
+import json
 import re
 
 from injector import inject
@@ -115,30 +116,42 @@ class DeepResearchExpert(BaseExpert):
     def _generate_query(self, state: OverallState, config: RunnableConfig = None) -> QueryGenerationState:  # type: ignore
         """LangGraph node that generates search queries based on the User's question."""
 
-        # check for custom initial search query count
-        if state.get("initial_search_query_count", 0) == 0:  # type: ignore
-            state["initial_search_query_count"] = self.number_of_initial_queries
+        try:
+            # check for custom initial search query count
+            if state.get("initial_search_query_count", 0) == 0:  # type: ignore
+                state["initial_search_query_count"] = self.number_of_initial_queries
 
-        # Format the prompt
-        formatted_prompt = query_writer_instructions.format(
-            number_queries=state["initial_search_query_count"],
-        )
-        
-        # Use the LLM client to generate structured output
-        # messages = [{"role": "user", "content": formatted_prompt}]
-        response = self.brain.think(history=state["messages"], system_message=formatted_prompt)
-        
-        # Parse the response to extract queries (simplified for now)
-        # In a real implementation, you'd want to use structured output
-        content = response.get("content", "")
-        match = re.search(r"```json\s*\n*(.*?)\n*```", content, re.DOTALL)
-        content = match.group(1)
-        output = ast.literal_eval(content)
-        
-        return {
-            "query_list": output["query"][:state["initial_search_query_count"]],
-            "do_research": output["do_research"]
-        }
+            # Format the prompt
+            formatted_prompt = query_writer_instructions.format(
+                number_queries=state["initial_search_query_count"],
+            )
+            
+            # Use the LLM client to generate structured output
+            # messages = [{"role": "user", "content": formatted_prompt}]
+            response = self.brain.think(history=state["messages"], system_message=formatted_prompt)
+            
+            # Parse the response to extract queries (simplified for now)
+            # In a real implementation, you'd want to use structured output
+            content = response.get("content", "")
+            match = re.search(r"```json\s*\n*(.*?)\n*```", content, re.DOTALL)
+            content = match.group(1)
+            try:
+                output = ast.literal_eval(content)
+            except Exception as e:
+                output = json.loads(content)
+            
+            return {
+                "query_list": output["query"][:state["initial_search_query_count"]],
+                "do_research": output["do_research"]
+                }
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logger.error(f"[generate_query node ERROR] {e}", exc_info=True)
+            return {
+                "query_list": [],
+                "do_research": False
+            }
 
     def _continue_to_web_research(self, state: QueryGenerationState):
         """LangGraph node that sends the search queries to the web research node."""
@@ -218,41 +231,56 @@ class DeepResearchExpert(BaseExpert):
 
     def _reflection(self, state: OverallState, config: RunnableConfig = None) -> ReflectionState:  # type: ignore
         """LangGraph node that identifies knowledge gaps and generates potential follow-up queries."""
-        # Increment the research loop count
-        state["research_loop_count"] = state.get("research_loop_count", 0) + 1  # type: ignore
+        try:
+            # Increment the research loop count
+            state["research_loop_count"] = state.get("research_loop_count", 0) + 1  # type: ignore
 
-        # Format the prompt
-        current_date = get_current_date()
-        formatted_prompt = reflection_instructions.format(
-            current_date=current_date,
-            research_topic=get_research_topic(state["messages"]),  # type: ignore
-            summaries="\n\n---\n\n".join(state["web_research_result"]),  # type: ignore
-        )
-        
-        # Use LLM client for reflection
-        messages = [{"role": "user", "content": formatted_prompt}]
-        response = self.llm_client.chat(messages)
-        
-        # Parse response (simplified - in real implementation use structured output)
-        # content = response.get("content", "")
-        # lines = content.split('\n')
-        content = response.get("content", "")
-        match = re.search(r"```json\s*\n*(.*?)\n*```", content, re.DOTALL)
-        content = match.group(1)
-        output = ast.literal_eval(content)
-        
-        # Simple parsing logic (would be better with structured output)
-        is_sufficient = output["is_sufficient"]
-        knowledge_gap = output["knowledge_gap"]
-        follow_up_queries = output["follow_up_queries"]#[line.strip() for line in lines if line.strip().startswith('-')][:2]
+            # Format the prompt
+            current_date = get_current_date()
+            formatted_prompt = reflection_instructions.format(
+                current_date=current_date,
+                research_topic=get_research_topic(state["messages"]),  # type: ignore
+                summaries="\n\n---\n\n".join(state["web_research_result"]),  # type: ignore
+            )
+            
+            # Use LLM client for reflection
+            messages = [{"role": "user", "content": formatted_prompt}]
+            response = self.llm_client.chat(messages)
+            
+            # Parse response (simplified - in real implementation use structured output)
+            # content = response.get("content", "")
+            # lines = content.split('\n')
+            content = response.get("content", "")
+            match = re.search(r"```json\s*\n*(.*?)\n*```", content, re.DOTALL)
+            content = match.group(1)
+            try:
+                output = ast.literal_eval(content)
+            except Exception as e:
+                output = json.loads(content)
+            
+            # Simple parsing logic (would be better with structured output)
+            is_sufficient = output["is_sufficient"]
+            knowledge_gap = output["knowledge_gap"]
+            follow_up_queries = output["follow_up_queries"]#[line.strip() for line in lines if line.strip().startswith('-')][:2]
 
-        return {
-            "is_sufficient": is_sufficient,
-            "knowledge_gap": knowledge_gap,
-            "follow_up_queries": follow_up_queries,
-            "research_loop_count": state["research_loop_count"],
-            "number_of_ran_queries": len(state["search_query"]),  # type: ignore
-        }
+            return {
+                "is_sufficient": is_sufficient,
+                "knowledge_gap": knowledge_gap,
+                "follow_up_queries": follow_up_queries,
+                "research_loop_count": state["research_loop_count"],
+                "number_of_ran_queries": len(state["search_query"]),  # type: ignore
+                }
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logger.error(f"[reflection node ERROR] {e}", exc_info=True)
+            return {
+                "is_sufficient": False,
+                "knowledge_gap": "Error in reflection node",
+                "follow_up_queries": [],
+                "research_loop_count": state["research_loop_count"],
+                "number_of_ran_queries": len(state["search_query"]),  # type: ignore
+            }
 
     def _evaluate_research(
         self,
@@ -376,7 +404,9 @@ class DeepResearchExpert(BaseExpert):
         try:
             result = self.graph.invoke(initial_state)
         except Exception as e:
-            logger.error(f"Error running graph workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            logger.error(f"[graph workflow ERROR] {e}", exc_info=True)
         
         # Extract the final response
         if result.get("messages") and len(result["messages"]) > 0:
@@ -425,7 +455,7 @@ class DeepResearchExpert(BaseExpert):
         except Exception as e:
             import traceback
             traceback.print_exc()
-            logger.error(f"LangGraph failed: {e}", exc_info=True)
+            logger.error(f"[graph workflow ERROR] {e}", exc_info=True)
         
         # Extract the final response
         if result.get("messages") and len(result["messages"]) > 0:

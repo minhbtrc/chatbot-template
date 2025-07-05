@@ -47,12 +47,12 @@ def create_parser() -> argparse.ArgumentParser:
 
 def print_welcome_message():
     """Print welcome message for the CLI."""
-    print("\nWelcome to the RAG Bot CLI!")
+    print("\nWelcome to the DeepResearch Bot CLI!")
     print("You can:")
-    print("1. Process documents using --document <path>")
-    print("2. Ask questions about your documents")
-    print("3. Type 'exit' or press Ctrl+C to quit")
-    print("4. Type 'clear' to clear conversation history")
+    print("1. Ask questions")
+    print("2. Type 'exit' or press Ctrl+C to quit")
+    print("3. Type 'clear' to clear conversation history")
+    print("4. Type 'help' to show available commands")
     print()
 
 
@@ -98,7 +98,7 @@ async def process_input_stream(
 
 
 async def main():
-    """Run the RAG Bot CLI application."""
+    """Run the DeepResearch Bot CLI application."""
     parser = create_parser()
     args = parser.parse_args()
 
@@ -108,7 +108,7 @@ async def main():
 
     update_injector_with_config(config)
 
-    logger.info(f"Starting RAG Bot CLI with model: {config.model_type}")
+    logger.info(f"Starting DeepResearch Bot CLI with model: {config.model_type}")
 
     chat_engine: ChatEngine = get_instance(ChatEngine)
     user_id = "default"
