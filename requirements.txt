@@ -51,3 +51,4 @@ chromadb==1.0.9
 pypdf==5.5.0
 
 langchain-tavily==0.2.6
+loguru==0.7.2
