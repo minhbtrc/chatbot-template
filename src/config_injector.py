@@ -13,7 +13,7 @@ from src.base.components import (
     EmbeddingInterface,
     create_embedding
 )
-from src.experts import QnaExpert, RAGBotExpert
+from src.experts import QnaExpert, RAGBotExpert, DeepResearchExpert
 from src.chat_engine import ChatEngine
 
 
@@ -51,6 +51,7 @@ class ConfigurableModule(Module):
         # Bind individual experts (they will be created by the factory as needed)
         binder.bind(QnaExpert, to=QnaExpert, scope=singleton)
         binder.bind(RAGBotExpert, to=RAGBotExpert, scope=singleton)
+        binder.bind(DeepResearchExpert, to=DeepResearchExpert, scope=singleton)
         
         binder.bind(ChatEngine, to=ChatEngine, scope=singleton)
 

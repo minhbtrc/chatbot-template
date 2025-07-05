@@ -28,13 +28,17 @@ class CustomSearchTool(BaseTool):
             name="web_search",
             description="Useful for when you need to answer questions about current events, date, or factual information"
         )
+        serpapi_api_key=api_key or os.getenv("SERPAPI_API_KEY")
+        if not serpapi_api_key:
+            raise ValueError("SERPAPI_API_KEY is not set")
+        
         self._search = SerpAPIWrapper(
             params={
                 "engine": "google",
                 "gl": "us",
                 "hl": "en",
             },
-            serpapi_api_key=api_key or os.getenv("SERPAPI_API_KEY")
+            serpapi_api_key=serpapi_api_key
         )
 
     def run(self, input_data: str) -> str:
@@ -48,6 +52,9 @@ class CustomSearchTool(BaseTool):
             Search results as a string
         """
         return self._search.run(input_data)
+    
+    def search(self, input_data: str):
+        return self._search.results(input_data)
     
     def get_parameters_schema(self) -> Dict[str, Any]:
         """

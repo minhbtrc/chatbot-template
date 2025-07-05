@@ -184,6 +184,7 @@ dependencies = [
     { name = "langchain-chroma" },
     { name = "langchain-experimental" },
     { name = "langchain-google-vertexai" },
+    { name = "langchain-tavily" },
     { name = "langgraph" },
     { name = "langserve" },
     { name = "passlib", extra = ["bcrypt"] },
@@ -207,6 +208,7 @@ requires-dist = [
     { name = "langchain-chroma", specifier = ">=0.2.4" },
     { name = "langchain-experimental", specifier = ">=0.3.4" },
     { name = "langchain-google-vertexai", specifier = ">=2.0.23" },
+    { name = "langchain-tavily", specifier = ">=0.2.6" },
     { name = "langgraph", specifier = ">=0.4.5" },
     { name = "langserve", specifier = ">=0.3.1" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
@@ -1299,6 +1301,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e1/86/10f5f1564704f64d629135f16b0569d39598078c53e5c4ecc21781704164/langchain_google_vertexai-2.0.23.tar.gz", hash = "sha256:1e08eb57a4a7ed03bd807a06d1a57f3cad490774162f41ff9ab3bfae982528ef", size = 84154 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/48/58579b25234ad6d077a43aef9fe0a61b070cd5d7d32110b2b0f603a5ecf8/langchain_google_vertexai-2.0.23-py3-none-any.whl", hash = "sha256:cd621345aee1e1b045f30245c914c679fe66f9a62ebf274e629c080e006a32fa", size = 99974 },
+]
+
+[[package]]
+name = "langchain-tavily"
+version = "0.2.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/85/de/50542a9b11dc7f2ac9a0f4d89cc895dddac2361ad852cb684ebdfd33fa5d/langchain_tavily-0.2.6.tar.gz", hash = "sha256:52c93182abf6ae1eb6a11c32627087ae66edffe4e318299e00a184c7bb81f07c", size = 21020 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/86/4c8983e19fc7007a7ce6c27b1634f07f30183a1495008cc4ee99ffa3e42f/langchain_tavily-0.2.6-py3-none-any.whl", hash = "sha256:21f07c3ca05eb8bc239bc51f0c3918871e633ce64eb97721ea8747fddb30f4c6", size = 24874 },
 ]
 
 [[package]]
