@@ -14,12 +14,17 @@ Exit the chat by typing 'exit', 'quit', or pressing Ctrl+C.
 import argparse
 import sys
 import asyncio
+import colorama
+from colorama import Fore, Back, Style
 from typing import Optional, cast
 
 from src.chat_engine import ChatEngine
 from src.common.config import Config
 from src.common.logging import logger
 from src.config_injector import get_instance, update_injector_with_config
+
+# Initialize colorama for cross-platform colored output
+colorama.init(autoreset=True)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -50,10 +55,10 @@ def create_parser() -> argparse.ArgumentParser:
 
 def print_welcome_message():
     """Print welcome message and instructions."""
-    print("\n=== Chatbot CLI ===")
-    print("Type 'exit' or 'quit' to exit the chat.")
-    print("Press Ctrl+C to exit at any time.")
-    print("=" * 20)
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}=== Chatbot CLI ==={Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}Type 'exit' or 'quit' to exit the chat.{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}Press Ctrl+C to exit at any time.{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}{'=' * 20}{Style.RESET_ALL}")
     print()
 
 
@@ -65,7 +70,7 @@ async def process_streaming(
 ) -> None:
     """Stream bot response token by token."""
     async for token in chat_engine.stream_process_message(user_input, conversation_id, user_id):
-        print(token, end="", flush=True)
+        print(f"{Fore.BLUE}{token}{Style.RESET_ALL}", end="", flush=True)
     print()  # newline after stream ends
 
 
@@ -91,7 +96,7 @@ async def main():
 
     update_injector_with_config(config)
 
-    logger.info(f"Starting CLI with model: {config.model_type}")
+    logger.info(f"{Fore.MAGENTA}Starting CLI with model: {config.model_type}{Style.RESET_ALL}")
     chat_engine = cast(ChatEngine, get_instance(ChatEngine))
 
     print_welcome_message()
@@ -99,12 +104,13 @@ async def main():
     user_id = "default"
     try:
         while True:
-            user_input = input("User: ")
+            print(f"{Fore.YELLOW}User:{Style.RESET_ALL} ", end="", flush=True)
+            user_input = input()
             if user_input.strip().lower() in ["exit", "quit"]:
-                print("\nGoodbye!")
+                print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
                 break
 
-            print("Bot: ", end="", flush=True)
+            print(f"{Fore.CYAN}Bot:{Style.RESET_ALL} ", end="", flush=True)
             if args.stream:
                 await process_streaming(chat_engine, user_input, args.conversation_id, user_id)
             else:
@@ -112,11 +118,11 @@ async def main():
                 print(response)
             print()
     except KeyboardInterrupt:
-        print("\nGoodbye!")
+        print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
         sys.exit(0)
     except Exception as e:
         logger.error(f"Error in CLI: {e}")
-        print(f"An error occurred: {e}")
+        print(f"{Fore.RED}An error occurred: {e}{Style.RESET_ALL}")
         sys.exit(1)
     finally:
         chat_engine.close()

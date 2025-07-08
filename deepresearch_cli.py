@@ -11,11 +11,16 @@ Features:
 import argparse
 import asyncio
 import sys
+import colorama
+from colorama import Fore, Back, Style
 
 from src.common.config import Config
 from src.common.logging import logger
 from src.chat_engine import ChatEngine
 from src.config_injector import update_injector_with_config, get_instance
+
+# Initialize colorama for cross-platform colored output
+colorama.init(autoreset=True)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -47,12 +52,12 @@ def create_parser() -> argparse.ArgumentParser:
 
 def print_welcome_message():
     """Print welcome message for the CLI."""
-    print("\nWelcome to the DeepResearch Bot CLI!")
-    print("You can:")
-    print("1. Ask questions")
-    print("2. Type 'exit' or press Ctrl+C to quit")
-    print("3. Type 'clear' to clear conversation history")
-    print("4. Type 'help' to show available commands")
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Welcome to the DeepResearch Bot CLI!{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}You can:{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}1. Ask questions{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}2. Type 'exit' or press Ctrl+C to quit{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}3. Type 'clear' to clear conversation history{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}4. Type 'help' to show available commands{Style.RESET_ALL}")
     print()
 
 
@@ -64,11 +69,11 @@ async def process_input_full(
 ) -> str:
     """Process user input and return full bot response."""
     if user_input.lower() == "exit":
-        print("\nGoodbye!")
+        print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
         sys.exit(0)
     elif user_input.lower() == "clear":
         chat_engine.clear_history(conversation_id, user_id)
-        return "Conversation history cleared."
+        return f"{Fore.GREEN}Conversation history cleared.{Style.RESET_ALL}"
     
     result = await chat_engine.process_message(user_input, conversation_id, user_id)
     return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
@@ -82,16 +87,16 @@ async def process_input_stream(
 ) -> None:
     """Process user input with streaming response."""
     if user_input.lower() == "exit":
-        print("\nGoodbye!")
+        print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
         sys.exit(0)
     elif user_input.lower() == "clear":
         chat_engine.clear_history(conversation_id, user_id)
-        print("Conversation history cleared.")
+        print(f"{Fore.GREEN}Conversation history cleared.{Style.RESET_ALL}")
         return
 
     async for token in chat_engine.stream_process_message(user_input, conversation_id, user_id):
         try:
-            print(token, end="", flush=True)
+            print(f"{Fore.BLUE}{token}{Style.RESET_ALL}", end="", flush=True)
         except ValueError:
             pass  # stdout đã đóng
     # print()  # newline after stream ends
@@ -108,7 +113,7 @@ async def main():
 
     update_injector_with_config(config)
 
-    logger.info(f"Starting DeepResearch Bot CLI with model: {config.model_type}")
+    logger.info(f"{Fore.MAGENTA}Starting DeepResearch Bot CLI with model: {config.model_type}{Style.RESET_ALL}")
 
     chat_engine: ChatEngine = get_instance(ChatEngine)
     user_id = "default"
@@ -117,8 +122,9 @@ async def main():
 
     try:
         while True:
-            user_input = input("User: ")
-            print("Bot: ", end="", flush=True)
+            print(f"{Fore.YELLOW}User:{Style.RESET_ALL} ", end="", flush=True)
+            user_input = input()
+            print(f"{Fore.CYAN}Bot:{Style.RESET_ALL} ", end="", flush=True)
 
             if args.stream:
                 await process_input_stream(chat_engine, user_input, args.conversation_id, user_id)
@@ -131,10 +137,10 @@ async def main():
 
             print()
     except KeyboardInterrupt:
-        print("\nGoodbye!")
+        print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
     except Exception as e:
         try:
-            print(f"An error occurred: {e}")
+            print(f"{Fore.RED}An error occurred: {e}{Style.RESET_ALL}")
         except Exception:
             pass
     finally:
@@ -144,7 +150,6 @@ async def main():
             pass
         import logging
         logging.shutdown()
-
 
 
 if __name__ == "__main__":

@@ -11,12 +11,17 @@ Features:
 import argparse
 import asyncio
 import sys
+import colorama
+from colorama import Fore, Back, Style
 
 from src.common.config import Config
 from src.common.logging import logger
 from src.experts.rag_bot.expert import RAGBotExpert
 from src.chat_engine import ChatEngine
 from src.config_injector import update_injector_with_config, get_instance
+
+# Initialize colorama for cross-platform colored output
+colorama.init(autoreset=True)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -48,12 +53,12 @@ def create_parser() -> argparse.ArgumentParser:
 
 def print_welcome_message():
     """Print welcome message for the CLI."""
-    print("\nWelcome to the RAG Bot CLI!")
-    print("You can:")
-    print("1. Process documents using --document <path>")
-    print("2. Ask questions about your documents")
-    print("3. Type 'exit' or press Ctrl+C to quit")
-    print("4. Type 'clear' to clear conversation history")
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}Welcome to the RAG Bot CLI!{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}You can:{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}1. Process documents using --document <path>{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}2. Ask questions about your documents{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}3. Type 'exit' or press Ctrl+C to quit{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}4. Type 'clear' to clear conversation history{Style.RESET_ALL}")
     print()
 
 
@@ -65,11 +70,11 @@ async def process_input_full(
 ) -> str:
     """Process user input and return full bot response."""
     if user_input.lower() == "exit":
-        print("\nGoodbye!")
+        print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
         sys.exit(0)
     elif user_input.lower() == "clear":
         chat_engine.clear_history(conversation_id, user_id)
-        return "Conversation history cleared."
+        return f"{Fore.GREEN}Conversation history cleared.{Style.RESET_ALL}"
     
     result = await chat_engine.process_message(user_input, conversation_id, user_id)
     return f"{result.response}\n\n{result.additional_kwargs}" if result.additional_kwargs else result.response
@@ -83,15 +88,15 @@ async def process_input_stream(
 ) -> None:
     """Process user input with streaming response."""
     if user_input.lower() == "exit":
-        print("\nGoodbye!")
+        print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
         sys.exit(0)
     elif user_input.lower() == "clear":
         chat_engine.clear_history(conversation_id, user_id)
-        print("Conversation history cleared.")
+        print(f"{Fore.GREEN}Conversation history cleared.{Style.RESET_ALL}")
         return
 
     async for token in chat_engine.stream_process_message(user_input, conversation_id, user_id):
-        print(token, end="", flush=True)
+        print(f"{Fore.BLUE}{token}{Style.RESET_ALL}", end="", flush=True)
     print()  # newline after stream ends
 
 
@@ -106,7 +111,7 @@ async def main():
 
     update_injector_with_config(config)
 
-    logger.info(f"Starting RAG Bot CLI with model: {config.model_type}")
+    logger.info(f"{Fore.MAGENTA}Starting RAG Bot CLI with model: {config.model_type}{Style.RESET_ALL}")
 
     rag_bot: RAGBotExpert = get_instance(RAGBotExpert)
     chat_engine: ChatEngine = get_instance(ChatEngine)
@@ -114,16 +119,17 @@ async def main():
 
     # Optional: process document
     if args.document:
-        print(f"\nProcessing document: {args.document}")
+        print(f"\n{Fore.YELLOW}Processing document: {args.document}{Style.RESET_ALL}")
         await rag_bot.aprocess_document(args.document, user_id, args.conversation_id)
-        print("Document processed and indexed successfully!\n")
+        print(f"{Fore.GREEN}Document processed and indexed successfully!{Style.RESET_ALL}\n")
 
     print_welcome_message()
 
     try:
         while True:
-            user_input = input("User: ")
-            print("Bot: ", end="", flush=True)
+            print(f"{Fore.YELLOW}User:{Style.RESET_ALL} ", end="", flush=True)
+            user_input = input()
+            print(f"{Fore.CYAN}Bot:{Style.RESET_ALL} ", end="", flush=True)
 
             if args.stream:
                 await process_input_stream(chat_engine, user_input, args.conversation_id, user_id)
@@ -132,11 +138,11 @@ async def main():
                 print(response)
             print()
     except KeyboardInterrupt:
-        print("\nGoodbye!")
+        print(f"\n{Fore.RED}Goodbye!{Style.RESET_ALL}")
         sys.exit(0)
     except Exception as e:
         logger.error(f"Error in CLI: {e}")
-        print(f"An error occurred: {e}")
+        print(f"{Fore.RED}An error occurred: {e}{Style.RESET_ALL}")
         sys.exit(1)
     finally:
         chat_engine.close()

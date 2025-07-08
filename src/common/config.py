@@ -99,6 +99,11 @@ class Config(BaseModel):
     database_pool_size: Optional[int] = Field(default=5, description="Database connection pool size")
     database_max_overflow: Optional[int] = Field(default=10, description="Database connection pool max overflow")
 
+    # DeepResearch Bot Configuration
+    max_research_loops: int = Field(default=50, description="Maximum number of research loops")
+    number_of_initial_queries: int = Field(default=5, description="Number of initial queries")
+    graph_recursion_limit: int = Field(default=15, description="Maximum number of recursion steps in the graph")
+
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values: Any):

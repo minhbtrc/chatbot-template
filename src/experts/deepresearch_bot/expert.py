@@ -19,18 +19,11 @@ from src.common.config import Config
 from src.experts.base import BaseExpert
 from src.base.components import MemoryInterface
 from src.base.brains import BrainInterface
-from src.base.components.llms.base import BaseLLMClient
-from src.base.components.tools import ToolProvider, CustomSearchTool
 from src.common.logging import logger
 from src.common.schemas import ChatResponse
-from .prompts import (
-    get_current_date,
-    query_writer_instructions,
-    web_searcher_instructions,
-    reflection_instructions,
-    answer_instructions,
-)
+import src.experts.deepresearch_bot.prompts as deepresearch_prompts
 from .utils import (
+    get_current_date,
     get_research_topic,
 )
 from .state import (
@@ -57,8 +50,6 @@ class DeepResearchExpert(BaseExpert):
         config: Config,
         memory: MemoryInterface,
         brain: BrainInterface,
-        llm_client: BaseLLMClient,
-        tool_provider: ToolProvider
     ):
         """
         Initialize the Deep Research Expert.
@@ -67,24 +58,12 @@ class DeepResearchExpert(BaseExpert):
             config: Application configuration
             memory: Memory implementation for storing conversation history
             brain: Brain implementation (not used in this expert as it uses LangGraph)
-            llm_client: LLM client for making API calls
         """
         super().__init__(config, memory, brain)
-        self.llm_client = llm_client
         self.graph = self._build_graph()
 
-        tool_provider.register_tool(CustomSearchTool())
-        available_tools = tool_provider.get_tools()
-        if available_tools:
-            logger.info(f"Binding {len(available_tools)} tools to brain")
-            self.brain.use_tools(available_tools)
-        else:
-            logger.info("No tools available for binding")
         logger.info("Deep Research Expert initialized with LangGraph workflow")
 
-        self.max_research_loops = 5
-        self.number_of_initial_queries = 5
-    
     def _build_graph(self):
         """Build the LangGraph workflow."""
         # Create our Agent Graph
@@ -117,12 +96,10 @@ class DeepResearchExpert(BaseExpert):
         """LangGraph node that generates search queries based on the User's question."""
 
         try:
-            # check for custom initial search query count
-            if state.get("initial_search_query_count", 0) == 0:  # type: ignore
-                state["initial_search_query_count"] = self.number_of_initial_queries
-
             # Format the prompt
-            formatted_prompt = query_writer_instructions.format(
+            current_date = get_current_date()
+            formatted_prompt = deepresearch_prompts.query_writer_instructions.format(
+                current_date=current_date,
                 number_queries=state["initial_search_query_count"],
             )
             
@@ -134,7 +111,10 @@ class DeepResearchExpert(BaseExpert):
             # In a real implementation, you'd want to use structured output
             content = response.get("content", "")
             match = re.search(r"```json\s*\n*(.*?)\n*```", content, re.DOTALL)
-            content = match.group(1)
+            if match:
+                content = match.group(1)
+            else:
+                raise ValueError(f"No match found for content: {content}")
             try:
                 output = ast.literal_eval(content)
             except Exception as e:
@@ -237,22 +217,25 @@ class DeepResearchExpert(BaseExpert):
 
             # Format the prompt
             current_date = get_current_date()
-            formatted_prompt = reflection_instructions.format(
+            formatted_prompt = deepresearch_prompts.reflection_instructions.format(
                 current_date=current_date,
                 research_topic=get_research_topic(state["messages"]),  # type: ignore
                 summaries="\n\n---\n\n".join(state["web_research_result"]),  # type: ignore
             )
             
             # Use LLM client for reflection
-            messages = [{"role": "user", "content": formatted_prompt}]
-            response = self.llm_client.chat(messages)
+            response = self.brain.think([{"role": "user", "content": formatted_prompt}])
             
             # Parse response (simplified - in real implementation use structured output)
             # content = response.get("content", "")
             # lines = content.split('\n')
             content = response.get("content", "")
             match = re.search(r"```json\s*\n*(.*?)\n*```", content, re.DOTALL)
-            content = match.group(1)
+            if match:
+                content = match.group(1)
+            else:
+                raise ValueError(f"No match found for content: {content}")
+            
             try:
                 output = ast.literal_eval(content)
             except Exception as e:
@@ -289,7 +272,7 @@ class DeepResearchExpert(BaseExpert):
     ) -> Union[str, List[Send]]:
         """LangGraph routing function that determines the next step in the research flow."""
         
-        if state["is_sufficient"] or state["research_loop_count"] >= self.max_research_loops:
+        if state["is_sufficient"] or state["research_loop_count"] >= self.config.max_research_loops:
             return "finalize_answer"
         else:
             return [
@@ -307,15 +290,14 @@ class DeepResearchExpert(BaseExpert):
         """LangGraph node that finalizes the research summary."""
         # Format the prompt
         current_date = get_current_date()
-        formatted_prompt = answer_instructions.format(
+        formatted_prompt = deepresearch_prompts.answer_instructions.format(
             current_date=current_date,
             research_topic=get_research_topic(state["messages"]),  # type: ignore
             summaries="\n---\n\n".join(state["web_research_result"]),  # type: ignore
         )
 
         # Use LLM client for final answer
-        messages = [{"role": "user", "content": formatted_prompt}]
-        response = self.llm_client.chat(messages)
+        response = self.brain.think([{"role": "user", "content": formatted_prompt}])
         content = response.get("content", "")
 
         # Replace the short urls with the original urls and add all used urls to the sources_gathered
@@ -365,22 +347,14 @@ class DeepResearchExpert(BaseExpert):
         # Prepare history and add user message
         history = self._prepare_history(query, conversation_id, user_id)
         
-        # Convert history to LangChain messages
-        # messages: List[BaseMessage] = []
-        # for msg in history:
-        #     if msg.get("role") == "user":
-        #         messages.append(HumanMessage(content=msg["content"]))  # type: ignore
-        #     elif msg.get("role") == "assistant":
-        #         messages.append(AIMessage(content=msg["content"]))
-        
         # Create initial state for the workflow
         initial_state: OverallState = {
             "messages": history,
             "search_query": [],
             "web_research_result": [],
             "sources_gathered": [],
-            "initial_search_query_count": self.number_of_initial_queries,
-            "max_research_loops": self.max_research_loops,
+            "initial_search_query_count": self.config.number_of_initial_queries,
+            "max_research_loops": self.config.max_research_loops,
             "research_loop_count": 0,
         }
         return initial_state
@@ -402,7 +376,7 @@ class DeepResearchExpert(BaseExpert):
         # Run the research workflow
         logger.debug("Starting deep research workflow")
         try:
-            result = self.graph.invoke(initial_state)
+            result = self.graph.invoke(initial_state, {"recursion_limit": self.config.graph_recursion_limit})
         except Exception as e:
             import traceback
             traceback.print_exc()

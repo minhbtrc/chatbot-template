@@ -1,14 +1,7 @@
-from datetime import datetime
-
-
-# Get current date in a readable format
-def get_current_date():
-    return datetime.now().strftime("%B %d, %Y")
-
-
 query_writer_instructions = """Your goal is to generate sophisticated and diverse web search queries based on user query. These queries are intended for an advanced automated web research tool capable of analyzing complex results, following links, and synthesizing information.
 
 Instructions:
+- The current date is {current_date}.
 - Always prefer a single search query, only add another query if the original question requests multiple aspects or elements and one query is not enough.
 - Each query should focus on one specific aspect of the original question.
 - Don't produce more than {number_queries} queries.
@@ -52,6 +45,7 @@ Research Topic:
 reflection_instructions = """You are an expert research assistant analyzing summaries about "{research_topic}".
 
 Instructions:
+- The current date is {current_date}.
 - Identify knowledge gaps or areas that need deeper exploration and generate a follow-up query. (1 or multiple).
 - If provided summaries are sufficient to answer the user's question, don't generate a follow-up query.
 - If there is a knowledge gap, generate a follow-up query that would help expand your understanding.
