@@ -52,3 +52,4 @@ pypdf==5.5.0
 
 langchain-tavily==0.2.6
 loguru==0.7.2
+colorama==0.4.6

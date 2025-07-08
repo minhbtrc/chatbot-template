@@ -4,19 +4,30 @@ A modular backend framework for building AI chat applications powered by large l
 
 ## Features
 
+## Core Features
+
+### 🤖 AI & LLM Integration
 - 🧠 **Flexible Brain Architecture**: Support for multiple LLM providers (OpenAI, Azure OpenAI, LlamaCpp, Vertex AI)
-- 🔄 **Conversation Management**: Robust conversation history handling with multiple storage backends
-- 🛠️ **Extensible Tool System**: Easy integration of custom tools and capabilities
-- 📝 **Comprehensive Logging**: Detailed logging throughout the application lifecycle
-- 🔒 **Error Handling**: Robust error management with custom exceptions
-- 🚀 **FastAPI Integration**: Modern, async API with automatic documentation
-- 🔌 **Dependency Injection**: Clean component management and configuration
-- 🧪 **Testing Support**: Built-in testing infrastructure
 - 📚 **RAG Support**: Built-in support for Retrieval-Augmented Generation with document processing and vector storage
 - 🎯 **Streaming Chat**: Real-time streaming responses using Server-Sent Events (SSE)
-- 🖥️ **Streaming CLI**: Interactive command-line interface with real-time token streaming
+
+### 💬 Conversation & Memory
+- 🔄 **Conversation Management**: Robust conversation history handling with multiple storage backends
 - 🗄️ **SQL Memory System**: Persistent conversation storage with repository pattern and user management
+
+### 🛠️ Development & Architecture
+- 🚀 **FastAPI Integration**: Modern, async API with automatic documentation
+- 🔌 **Dependency Injection**: Clean component management and configuration
 - ⚡ **Async Support**: Full asynchronous operation support for high-performance applications
+- 🛠️ **Extensible Tool System**: Easy integration of custom tools and capabilities
+
+### 🔧 Operations & Reliability
+- 📝 **Comprehensive Logging**: Detailed logging throughout the application lifecycle
+- 🔒 **Error Handling**: Robust error management with custom exceptions
+- 🧪 **Testing Support**: Built-in testing infrastructure
+
+### 🖥️ User Interfaces
+- 🖥️ **Streaming CLI**: Interactive command-line interface with real-time token streaming
 
 ## Quick Start
 
