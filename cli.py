@@ -1,20 +1,3 @@
-#!/usr/bin/env python
-"""
-Unified Bot CLI – interact with different types of chatbots from your terminal.
-
-This script provides a unified interface for multiple bot types:
-- QNA: Basic question-answering bot
-- RAG: RAG-powered assistant with document processing
-- DEEPRESEARCH: Advanced research bot
-
-Usage:
-    python bot_cli.py --mode qna
-    python bot_cli.py --mode rag --document path/to/doc.pdf
-    python bot_cli.py --mode deepresearch
-
-Exit the chat by typing 'exit', 'quit', or pressing Ctrl+C.
-"""
-
 import argparse
 import asyncio
 import sys
