@@ -79,7 +79,7 @@ class LLMBrain(BaseBrain):
         logger.debug(f"Sending messages to {self.llm_type}: {messages}")
         
         # Call the LLM client
-        response = self.llm_client.chat(messages)
+        response = self.llm_client.chat(messages, **kwargs)
         
         return response
     
@@ -93,7 +93,7 @@ class LLMBrain(BaseBrain):
         logger.debug(f"Sending messages to {self.llm_type}: {messages}")
         
         # Call the LLM client
-        response = await self.llm_client.achat(messages)
+        response = await self.llm_client.achat(messages, **kwargs)
         
         return response
     
@@ -113,7 +113,7 @@ class LLMBrain(BaseBrain):
         # Log the messages being sent
         logger.debug(f"Streaming messages to {self.llm_type}: {messages}")
         
-        for chunk in self.llm_client.stream_chat(messages):
+        for chunk in self.llm_client.stream_chat(messages, **kwargs):
             yield chunk
     
     async def astream_think(self, history: List[Dict[str, Any]], system_message: Optional[str] = None, **kwargs: Any) -> AsyncGenerator[str, None]:
@@ -132,7 +132,7 @@ class LLMBrain(BaseBrain):
         # Log the messages being sent
         logger.debug(f"Async streaming messages to {self.llm_type}: {messages}")
         
-        async for chunk in self.llm_client.astream_chat(messages):
+        async for chunk in self.llm_client.astream_chat(messages, **kwargs):
             yield chunk
     
     def reset(self) -> None:
