@@ -1,4 +1,6 @@
 from typing import List
+from enum import Enum
+
 from pydantic import BaseModel, Field
 
 
@@ -21,3 +23,8 @@ class Reflection(BaseModel):
     follow_up_queries: List[str] = Field(
         description="A list of follow-up queries to address the knowledge gap."
     )
+
+
+class WebSearchResult(Enum):
+    NO_USEFUL_RESULTS = "No useful results found"
+    ERROR = "Error: web search failed"
