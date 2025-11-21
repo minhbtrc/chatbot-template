@@ -26,7 +26,7 @@ class Config(BaseModel):
     memory_key: Optional[str] = Field(default="history", description="Key to use for conversation history")
     
     # Chat Configuration
-    model_type: str = Field(default="OPENAI", description="The type of model to use (OPENAI, VERTEX, LLAMA, AZUREOPENAI)")
+    model_type: str = Field(default="OPENAI", description="The type of model to use (OPENAI, VERTEX, LLAMA, AZUREOPENAI, GEMINI)")
     
     ## Azure OpenAI Configuration
     azure_chat_model_key: Optional[str] = Field(default=None, description="Azure OpenAI API Key")
@@ -37,6 +37,10 @@ class Config(BaseModel):
     ## OpenAI Configuration
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API Key")
     base_model_name: Optional[str] = Field(default=None, description="Base model name to use")
+
+    ## Gemini Configuration
+    gemini_api_key: Optional[str] = Field(default=None, description="Google Gemini API Key")
+    gemini_model_name: Optional[str] = Field(default="gemini-pro", description="Gemini model name to use")
 
     ## LlamaCpp Configuration
     model_path: Optional[str] = Field(default=None, description="Path to LlamaCpp model")

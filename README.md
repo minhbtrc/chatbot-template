@@ -9,7 +9,7 @@ A modular, production-ready backend framework for building AI chat applications 
   - **QNA**: Basic question-answering chatbot
   - **RAG**: Retrieval-Augmented Generation with document processing
   - **DEEPRESEARCH**: Advanced research assistant with web search capabilities
-- 🔄 **Flexible LLM Support**: Multiple LLM providers (OpenAI, Azure OpenAI, LlamaCpp, Vertex AI)
+- 🔄 **Flexible LLM Support**: Multiple LLM providers (OpenAI, Azure OpenAI, Google Gemini, LlamaCpp, Vertex AI)
 - 🎯 **Streaming Responses**: Real-time streaming chat using Server-Sent Events (SSE)
 - 📚 **Document Processing**: Built-in PDF processing and vector storage for RAG
 
@@ -66,7 +66,7 @@ A modular, production-ready backend framework for building AI chat applications 
 3. Set up environment variables:
    ```bash
    # Core Configuration
-   MODEL_TYPE=OPENAI  # Options: OPENAI, LLAMA, AZUREOPENAI, VERTEX
+   MODEL_TYPE=OPENAI  # Options: OPENAI, LLAMA, AZUREOPENAI, VERTEX, GEMINI
    
    # OpenAI Configuration
    OPENAI_API_KEY=your_openai_key
@@ -77,6 +77,10 @@ A modular, production-ready backend framework for building AI chat applications 
    AZURE_CHAT_MODEL_VERSION=2024-02-15-preview
    AZURE_CHAT_MODEL_ENDPOINT=your_endpoint
    AZURE_CHAT_MODEL_DEPLOYMENT=your_deployment
+
+   # Google Gemini Configuration
+   GEMINI_API_KEY=your_gemini_key
+   GEMINI_MODEL_NAME=gemini-pro
    
    # MongoDB Configuration (optional)
    MONGO_URI=mongodb://localhost:27017/chatbot
@@ -153,7 +157,7 @@ All CLI modes support:
 - `clear`: Clear conversation history
 - `Ctrl+C`: Force exit
 - `--stream`: Enable real-time token streaming
-- `--model`: Choose LLM provider (openai, llama, azureopenai)
+- `--model`: Choose LLM provider (openai, llama, azureopenai, gemini)
 - `--conversation-id`: Set custom session ID
 
 **RAG-specific features:**
@@ -288,7 +292,7 @@ docker-compose up
 The application uses environment variables for configuration. Key settings:
 
 ### Required Settings
-- `MODEL_TYPE`: LLM provider (OPENAI, AZUREOPENAI, LLAMA, VERTEX)
+- `MODEL_TYPE`: LLM provider (OPENAI, AZUREOPENAI, LLAMA, VERTEX, GEMINI)
 - `OPENAI_API_KEY` or equivalent provider keys
 
 ### Optional Settings

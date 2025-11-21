@@ -21,6 +21,7 @@ pymongo>=4.6.1
 openai>=1.5.0
 azure-identity>=1.12.0
 azure-core>=1.30.0
+langchain-google-genai>=1.0.3
 
 # Utilities
 python-dotenv>=1.0.0
