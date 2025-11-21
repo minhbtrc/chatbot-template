@@ -16,5 +16,8 @@ def create_llm_client(config: Config) -> BaseLLMClient:
     elif model_type == "LLAMA":
         from src.base.components.llms.variants.llamacpp_client import LlamaCppClient
         return LlamaCppClient(config)
+    elif model_type == "GEMINI":
+        from src.base.components.llms.variants.gemini_client import GeminiClient
+        return GeminiClient(config)
     else:
         raise ValueError(f"Invalid model type: {model_type}")
