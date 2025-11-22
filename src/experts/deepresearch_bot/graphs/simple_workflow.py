@@ -25,7 +25,7 @@ from src.experts.deepresearch_bot.utils import (
 )
 from src.experts.deepresearch_bot.state import (
     OverallState,
-    QueryGenerationState,
+    ƒ,
     ReflectionState,
     WebSearchState,
 )
@@ -67,6 +67,7 @@ class SimpleWorkflow:
             "initial_search_query_count": self.config.number_of_initial_queries,
             "max_research_loops": self.config.max_research_loops,
             "research_loop_count": 0,
+            "current_queries": [],
         }
         return initial_state
 
@@ -127,6 +128,10 @@ class SimpleWorkflow:
             
             return {
                 "query_list": output["query"][:state["initial_search_query_count"]],
+                "current_queries": [
+                    q["query"] if isinstance(q, dict) else q
+                    for q in output["query"][:state["initial_search_query_count"]]
+                ],
                 "do_research": output["do_research"]
                 }
         except Exception as e:
@@ -135,74 +140,86 @@ class SimpleWorkflow:
             logger.error(f"[generate_query node ERROR] {e}", exc_info=True)
             return {
                 "query_list": [],
+                "current_queries": [],
                 "do_research": False
             }
 
-    def _continue_to_web_research(self, state: QueryGenerationState):
+    def _continue_to_web_research(self, state: OverallState):
         """LangGraph node that sends the search queries to the web research node."""
-        if state["do_research"] is True:
-            return [
-                Send("web_research", {"search_query": search_query, "id": str(idx)})
-                for idx, search_query in enumerate(state["query_list"])
-            ]
+        if state.get("current_queries") and len(state["current_queries"]) > 0:
+            return "web_research"
         else:
             return "finalize_answer"
 
-    def _web_research(self, state: WebSearchState, config: RunnableConfig = None) -> Dict[str, Any]:  # type: ignore
+    def _web_research(self, state: OverallState, config: RunnableConfig = None) -> Dict[str, Any]:  # type: ignore
         """LangGraph node that performs web research using the native Google Search API tool."""
         try:
             # search_tool = CustomSearchTool()
             search_tool = TavilySearch()
-            results = search_tool.run(state["search_query"])
-
-            sources_gathered: List[Dict[str, Any]] = []
-            snippet_blocks: List[str] = []
-
-            # Tavily returns results in a different format - extract the content
-            if isinstance(results, str):
-                # If results is a string, it might be the formatted content
-                web_research_result = [results] if results.strip() else [WebSearchResult.NO_USEFUL_RESULTS.value]
-                return {
-                    "sources_gathered": [],
-                    "search_query": [state["search_query"]],
-                    "web_research_result": [web_research_result],
-                }
             
-            # Handle Tavily's structured response format
-            if isinstance(results, dict):
-                organic_results = results.get("results", [])
-            elif isinstance(results, list):
-                organic_results = results
-            else:
-                organic_results = []
-
-            for i, result in enumerate(organic_results):
-                title = result.get("title", "").strip()
-                url = result.get("url", "").strip()  # Tavily uses "url" instead of "link"
-                snippet = result.get("content", "").strip()  # Tavily uses "content" instead of "snippet"
-
-                if not title or not url:
-                    continue  # skip bad results
-
-                # Define short_url as a numbered citation marker
-                short_url = f"[{i + 1}]"
-                value = url  # or expand this to dict(url, title) if needed
-
-                sources_gathered.append({
-                    "title": title,
-                    "short_url": short_url,
-                    "value": value,
-                    "snippet": snippet,
-                })
-
-                snippet_blocks.append(f"{short_url} {title}: {snippet}")
-
-            web_research_result = ["\n".join(snippet_blocks)] if snippet_blocks else [WebSearchResult.NO_USEFUL_RESULTS.value]
+            all_sources_gathered = []
+            all_web_research_results = []
+            all_search_queries = []
+            
+            # Iterate over all current queries
+            for idx, query in enumerate(state.get("current_queries", [])):
+                try:
+                    results = search_tool.run(query)
+                    all_search_queries.append(query)
+        
+                    sources_gathered: List[Dict[str, Any]] = []
+                    snippet_blocks: List[str] = []
+        
+                    # Tavily returns results in a different format - extract the content
+                    if isinstance(results, str):
+                        # If results is a string, it might be the formatted content
+                        web_research_result = results if results.strip() else WebSearchResult.NO_USEFUL_RESULTS.value
+                        all_web_research_results.append(web_research_result)
+                        continue
+                    
+                    # Handle Tavily's structured response format
+                    if isinstance(results, dict):
+                        organic_results = results.get("results", [])
+                    elif isinstance(results, list):
+                        organic_results = results
+                    else:
+                        organic_results = []
+        
+                    for i, result in enumerate(organic_results):
+                        title = result.get("title", "").strip()
+                        url = result.get("url", "").strip()  # Tavily uses "url" instead of "link"
+                        snippet = result.get("content", "").strip()  # Tavily uses "content" instead of "snippet"
+        
+                        if not title or not url:
+                            continue  # skip bad results
+        
+                        # Define short_url as a numbered citation marker
+                        # We need unique IDs across all queries, so use a combination of query index and result index
+                        short_url = f"[{len(state.get('sources_gathered', [])) + len(all_sources_gathered) + 1}]"
+                        value = url
+        
+                        sources_gathered.append({
+                            "title": title,
+                            "short_url": short_url,
+                            "value": value,
+                            "snippet": snippet,
+                        })
+        
+                        snippet_blocks.append(f"{short_url} {title}: {snippet}")
+        
+                    web_research_result = "\n".join(snippet_blocks) if snippet_blocks else WebSearchResult.NO_USEFUL_RESULTS.value
+                    all_web_research_results.append(web_research_result)
+                    all_sources_gathered.extend(sources_gathered)
+                    
+                except Exception as e:
+                    logger.error(f"Error searching for query '{query}': {e}")
+                    all_web_research_results.append(WebSearchResult.ERROR.value)
 
             return {
-                "sources_gathered": sources_gathered,
-                "search_query": [state["search_query"]],
-                "web_research_result": [web_research_result],
+                "sources_gathered": all_sources_gathered,
+                "search_query": all_search_queries,
+                "web_research_result": all_web_research_results,
+                "current_queries": [],  # Clear current queries after processing
             }
         except Exception as e:
             import traceback
@@ -210,8 +227,9 @@ class SimpleWorkflow:
             logger.error(f"[web_research node ERROR] {e}", exc_info=True)
             return {
                 "sources_gathered": [],
-                "search_query": [state.get("search_query", "unknown")],
-                "web_research_result": [[WebSearchResult.ERROR.value]]
+                "search_query": [],
+                "web_research_result": [],
+                "current_queries": []
             }
 
     def _reflection(self, state: OverallState, config: RunnableConfig = None) -> ReflectionState:  # type: ignore
@@ -258,12 +276,20 @@ class SimpleWorkflow:
             knowledge_gap = output["knowledge_gap"]
             follow_up_queries = output["follow_up_queries"]#[line.strip() for line in lines if line.strip().startswith('-')][:2]
 
+            # Deduplicate queries
+            past_queries = set(state.get("search_query", []))
+            unique_follow_up_queries = [
+                q for q in follow_up_queries 
+                if q not in past_queries and q not in state.get("current_queries", [])
+            ]
+
             return {
                 "is_sufficient": is_sufficient,
                 "knowledge_gap": knowledge_gap,
-                "follow_up_queries": follow_up_queries,
+                "follow_up_queries": unique_follow_up_queries,
                 "research_loop_count": state["research_loop_count"],
                 "number_of_ran_queries": len(state["search_query"]),  # type: ignore
+                "current_queries": unique_follow_up_queries,
                 }
         except Exception as e:
             import traceback
@@ -275,28 +301,24 @@ class SimpleWorkflow:
                 "follow_up_queries": [],
                 "research_loop_count": state["research_loop_count"],
                 "number_of_ran_queries": len(state["search_query"]),  # type: ignore
+                "current_queries": [],
             }
 
     def _evaluate_research(
         self,
         state: ReflectionState,
         config: RunnableConfig = None,  # type: ignore
-    ) -> Union[str, List[Send]]:
+    ) -> str:
         """LangGraph routing function that determines the next step in the research flow."""
         
-        if state["is_sufficient"] or state["research_loop_count"] >= self.config.max_research_loops:
+        if (
+            state["is_sufficient"] 
+            or state["research_loop_count"] >= self.config.max_research_loops
+            or not state.get("current_queries")  # Stop if no new queries
+        ):
             return "finalize_answer"
         else:
-            return [
-                Send(
-                    "web_research",
-                    {
-                        "search_query": follow_up_query,
-                        "id": str(state["number_of_ran_queries"] + int(idx)),
-                    },
-                )
-                for idx, follow_up_query in enumerate(state["follow_up_queries"])  # type: ignore
-            ]
+            return "web_research"
 
     def _finalize_answer(self, state: OverallState, config: RunnableConfig = None) -> Dict[str, Any]:  # type: ignore
         """LangGraph node that finalizes the research summary."""
